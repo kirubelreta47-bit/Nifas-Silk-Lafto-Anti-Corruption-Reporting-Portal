@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-navy: #0B1F3A;
+    --color-navy-tint: #E8EEF7;
+    --color-accent: #F5B700;
+  }
+
+  body {
+    font-family: 'Noto Sans Ethiopic', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0B1F3A;
+    background-color: #FFFFFF;
+  }
+}
+
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
