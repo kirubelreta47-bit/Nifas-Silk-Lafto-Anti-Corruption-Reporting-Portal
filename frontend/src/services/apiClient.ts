@@ -7,10 +7,14 @@ import {
   AdminUser,
 } from '../types';
 
-export const API_BASE_URL: string =
+const rawApiUrl =
   (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) ||
   (typeof process !== 'undefined' && process.env?.VITE_API_BASE_URL) ||
   'http://localhost:5000/api';
+
+// Normalize: remove trailing slashes and ensure clean '/api' endpoint
+const cleanBase = rawApiUrl.trim().replace(/\/+$/, '');
+export const API_BASE_URL: string = cleanBase.endsWith('/api') ? cleanBase : `${cleanBase}/api`;
 
 /**
  * Resolves relative file URLs (e.g. /api/upload/file/...) to the full backend endpoint

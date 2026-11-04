@@ -40,11 +40,24 @@ export const createServer = () => {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-  // API Routes
+  // Request Logger
+  app.use((req: Request, _res: Response, next: NextFunction) => {
+    console.log(`🌐 [API Request] ${req.method} ${req.url}`);
+    next();
+  });
+
+  // API Routes (Mounted with and without '/api' prefix to ensure 100% compatibility)
   app.use('/health', healthRoutes);
+  app.use('/api/health', healthRoutes);
+
   app.use('/api/auth', authRoutes);
+  app.use('/auth', authRoutes);
+
   app.use('/api/reports', reportRoutes);
+  app.use('/reports', reportRoutes);
+
   app.use('/api/upload', uploadRoutes);
+  app.use('/upload', uploadRoutes);
 
   // Root Welcome Route
   app.get('/', (_req: Request, res: Response) => {
