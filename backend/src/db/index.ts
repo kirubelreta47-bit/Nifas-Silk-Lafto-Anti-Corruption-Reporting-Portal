@@ -142,36 +142,19 @@ export const initDatabase = async (): Promise<boolean> => {
         CREATE INDEX IF NOT EXISTS idx_evidence_report_id ON evidence(report_id);
       `);
 
-      // 2. Safe Initial Admin Bootstrap (Never resets or overwrites existing admin passwords)
-      const adminCountRes = await client.query('SELECT COUNT(*) FROM admin_users');
-      const adminCount = parseInt(adminCountRes.rows[0].count, 10);
+      // 2. Safe Initial Admin Bootstrap & Sync
+      const initialEmail = config.admin.initialEmail;
+      const initialPassword = config.admin.initialPassword;
 
-      if (adminCount === 0) {
-        const initialEmail = config.admin.initialEmail;
-        const initialPassword = config.admin.initialPassword;
-
-        if (initialPassword) {
-          const hashedPassword = bcrypt.hashSync(initialPassword, 10);
-          await client.query(
-            `INSERT INTO admin_users (email, password_hash, name, role)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (email) DO NOTHING`,
-            [initialEmail, hashedPassword, 'Lead Ethics Officer', 'admin']
-          );
-          console.log(`🔐 [Security] Initial administrator account created for ${initialEmail} with environment password.`);
-        } else if (config.nodeEnv !== 'production') {
-          // Development fallback with default
-          const hashedPassword = bcrypt.hashSync('admin123', 10);
-          await client.query(
-            `INSERT INTO admin_users (email, password_hash, name, role)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (email) DO NOTHING`,
-            [initialEmail, hashedPassword, DEMO_ADMIN_USER.name, 'admin']
-          );
-          console.log(`ℹ [Security DEV] Created development admin account for ${initialEmail}. In production, specify INITIAL_ADMIN_PASSWORD.`);
-        } else {
-          console.warn('⚠️ [Security CRITICAL] No admin user exists and INITIAL_ADMIN_PASSWORD was not provided. Please set INITIAL_ADMIN_PASSWORD in Render environment variables.');
-        }
+      if (initialPassword) {
+        const hashedPassword = bcrypt.hashSync(initialPassword, 10);
+        await client.query(
+          `INSERT INTO admin_users (email, password_hash, name, role)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
+          [initialEmail, hashedPassword, 'Lead Ethics Officer', 'admin']
+        );
+        console.log(`🔐 [Security] Administrator account synced for ${initialEmail}.`);
       }
 
       // 3. Demo Data Seeding (Only if explicitly enabled or in development when table is empty)

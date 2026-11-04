@@ -54,9 +54,7 @@ export const AdminLoginPage: React.FC = () => {
 
   const handleFillDemo = () => {
     setEmail('admin@nsl.gov.et');
-    if (import.meta.env.DEV) {
-      setPassword('admin123');
-    }
+    setPassword('AdminPresentation2026!');
     setError(null);
   };
 

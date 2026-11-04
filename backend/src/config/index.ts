@@ -25,7 +25,7 @@ export const config = {
   // Secure Initial Administrator Credentials
   admin: {
     initialEmail: process.env.INITIAL_ADMIN_EMAIL || 'admin@nsl.gov.et',
-    initialPassword: process.env.INITIAL_ADMIN_PASSWORD || 'change-me-in-production-123!',
+    initialPassword: process.env.INITIAL_ADMIN_PASSWORD || 'AdminPresentation2026!',
   },
 
   // Seed data controls
