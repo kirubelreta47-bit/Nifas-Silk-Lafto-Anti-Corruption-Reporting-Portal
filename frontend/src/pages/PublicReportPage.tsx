@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { reportService } from '../services/reportService';
+import { apiClient } from '../services/apiClient';
 import { CorruptionType, EvidenceItem, CreateReportInput } from '../types';
 import { AudioRecorder } from '../components/AudioRecorder';
 import {
@@ -10,6 +11,9 @@ import {
   Upload,
   X,
   FileText,
+  FileSpreadsheet,
+  Video,
+  ImageIcon,
   Music,
   CheckCircle2,
   AlertTriangle,
@@ -85,49 +89,68 @@ export const PublicReportPage: React.FC = () => {
       return;
     }
 
+    // Supported MIME types and extensions covering PDF, Word, Excel, Images, Video, Audio, Archives
     const validMimes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/svg+xml',
+      'image/',
+      'video/',
+      'audio/',
       'application/pdf',
-      'audio/mpeg',
-      'audio/wav',
-      'audio/ogg',
-      'audio/webm',
-      'audio/m4a',
-      'audio/mp4',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain',
+      'application/zip',
+      'application/x-zip-compressed',
+      'application/x-rar-compressed',
     ];
 
-    Array.from(files).forEach((file) => {
-      // 10MB limit
-      if (file.size > 10 * 1024 * 1024) {
+    const allowedExtensionsRegex =
+      /\.(jpg|jpeg|png|webp|svg|gif|bmp|pdf|doc|docx|xls|xlsx|csv|ppt|pptx|txt|mp3|wav|ogg|webm|m4a|aac|flac|mp4|mov|avi|mkv|3gp|wmv|zip|rar)$/i;
+
+    Array.from(files).forEach(async (file) => {
+      // 25MB limit per file
+      if (file.size > 25 * 1024 * 1024) {
         setFileError(`${file.name}: ${t('fileSizeError')}`);
         return;
       }
 
-      const isValidType = validMimes.some((mime) =>
-        file.type.toLowerCase().includes(mime.split('/')[1]) || file.type === mime
+      const isValidType = validMimes.some((prefixOrMime) =>
+        file.type.toLowerCase().startsWith(prefixOrMime) || file.type === prefixOrMime
       );
 
-      if (!isValidType && !file.name.match(/\.(jpg|jpeg|png|webp|svg|pdf|mp3|wav|ogg|webm|m4a)$/i)) {
+      if (!isValidType && !file.name.match(allowedExtensionsRegex)) {
         setFileError(`${file.name}: ${t('fileTypeError')}`);
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        const newItem: EvidenceItem = {
-          id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          name: file.name,
-          type: file.type || 'application/octet-stream',
-          size: file.size,
-          dataUrl,
-        };
-        setEvidenceList((prev) => [...prev, newItem].slice(0, 5));
-      };
-      reader.readAsDataURL(file);
+      // Upload to backend storage (Cloudflare R2)
+      try {
+        const uploadedItem = await apiClient.uploadFile(file);
+        setEvidenceList((prev) => [...prev, uploadedItem].slice(0, 5));
+      } catch (uploadErr: any) {
+        // In local development offline fallback: read locally as Data URL
+        if (import.meta.env.DEV) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const dataUrl = event.target?.result as string;
+            const newItem: EvidenceItem = {
+              id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+              name: file.name,
+              type: file.type || 'application/octet-stream',
+              size: file.size,
+              dataUrl,
+            };
+            setEvidenceList((prev) => [...prev, newItem].slice(0, 5));
+          };
+          reader.readAsDataURL(file);
+        } else {
+          setFileError(`${file.name}: ${uploadErr.message || 'File upload failed'}`);
+        }
+      }
     });
 
     e.target.value = '';
@@ -179,7 +202,7 @@ export const PublicReportPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRateLimitError(null);
 
@@ -205,8 +228,8 @@ export const PublicReportPage: React.FC = () => {
       honeypot: honeypot.trim() || undefined,
     };
 
-    setTimeout(() => {
-      const result = reportService.submitReport(inputData);
+    try {
+      const result = await reportService.submitReport(inputData);
       setIsSubmitting(false);
 
       if (result.success && result.report) {
@@ -218,10 +241,18 @@ export const PublicReportPage: React.FC = () => {
         } else if (result.error === 'errorBotDetected') {
           setRateLimitError(t('errorBotDetected'));
         } else {
-          setRateLimitError('ስህተት ተከስቷል፣ እባክዎ እንደገና ይሞክሩ።');
+          setRateLimitError(
+            result.error ||
+              (lang === 'am'
+                ? 'ጥቆማው ወደ አገልጋይ አልደረሰም። እባክዎ የአውታረ መረብ ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።'
+                : 'Failed to reach server. Please check your connection and retry.')
+          );
         }
       }
-    }, 350);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setRateLimitError(err.message || 'Submission failed');
+    }
   };
 
   const resetForm = () => {
@@ -696,7 +727,7 @@ export const PublicReportPage: React.FC = () => {
                   id="file-upload-input"
                   type="file"
                   multiple
-                  accept="image/jpeg,image/png,image/webp,image/svg+xml,application/pdf,audio/*"
+                  accept="image/*,video/*,audio/*,application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.zip,.rar"
                   disabled={evidenceList.length >= 5}
                   onChange={handleFileUpload}
                   className="hidden"
@@ -717,8 +748,12 @@ export const PublicReportPage: React.FC = () => {
             {evidenceList.length > 0 && (
               <div className="space-y-2 pt-1">
                 {evidenceList.map((file) => {
-                  const isAudio = file.type.startsWith('audio/');
-                  const isPdf = file.type.includes('pdf');
+                  const isAudio = file.type.startsWith('audio/') || file.name.match(/\.(mp3|wav|ogg|webm|m4a|aac)$/i);
+                  const isVideo = file.type.startsWith('video/') || file.name.match(/\.(mp4|mov|avi|webm|mkv)$/i);
+                  const isImg = file.type.startsWith('image/') || file.name.match(/\.(jpg|jpeg|png|webp|svg|gif)$/i);
+                  const isSpreadsheet = file.type.includes('excel') || file.type.includes('spreadsheet') || file.type.includes('csv') || file.name.match(/\.(xls|xlsx|csv)$/i);
+                  const isPdf = file.type.includes('pdf') || file.name.endsWith('.pdf');
+                  const isWord = file.type.includes('word') || file.name.match(/\.(doc|docx)$/i);
 
                   return (
                     <div
@@ -728,10 +763,18 @@ export const PublicReportPage: React.FC = () => {
                       <div className="flex items-center gap-2.5 min-w-0">
                         {isAudio ? (
                           <Music className="w-4 h-4 text-purple-700 shrink-0" />
+                        ) : isVideo ? (
+                          <Video className="w-4 h-4 text-indigo-700 shrink-0" />
+                        ) : isImg ? (
+                          <ImageIcon className="w-4 h-4 text-emerald-700 shrink-0" />
+                        ) : isSpreadsheet ? (
+                          <FileSpreadsheet className="w-4 h-4 text-green-700 shrink-0" />
                         ) : isPdf ? (
                           <FileText className="w-4 h-4 text-rose-700 shrink-0" />
-                        ) : (
+                        ) : isWord ? (
                           <FileText className="w-4 h-4 text-blue-700 shrink-0" />
+                        ) : (
+                          <FileText className="w-4 h-4 text-slate-700 shrink-0" />
                         )}
                         <span className="font-bold text-slate-900 truncate max-w-xs">{file.name}</span>
                         <span className="text-slate-500 text-xs font-mono">({formatFileSize(file.size)})</span>

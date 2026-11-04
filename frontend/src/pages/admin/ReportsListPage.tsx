@@ -32,6 +32,11 @@ export const ReportsListPage: React.FC = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [syncTrigger, setSyncTrigger] = useState(0);
+
+  React.useEffect(() => {
+    reportService.syncWithBackend().then(() => setSyncTrigger((v) => v + 1));
+  }, []);
 
   const getCorruptionTypeLabel = (type: CorruptionType) => {
     switch (type) {
@@ -64,7 +69,7 @@ export const ReportsListPage: React.FC = () => {
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
     });
-  }, [search, statusFilter, typeFilter, anonymousOnly, dateFrom, dateTo]);
+  }, [search, statusFilter, typeFilter, anonymousOnly, dateFrom, dateTo, syncTrigger]);
 
   // Pagination calculation
   const totalReports = filteredReports.length;

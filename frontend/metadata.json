@@ -1,0 +1,8 @@
+{
+  "name": "Nifas Silk-Lafto Anti-Corruption Reporting Portal",
+  "description": "Official citizen corruption reporting and administrative case management portal for Nifas Silk-Lafto Sub-City, Addis Ababa, Ethiopia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,24 +1,11 @@
-import {
-  Report,
-  CreateReportInput,
-  FilterOptions,
-  ReportStatus,
-  CorruptionType,
-  DecisionLog,
-} from '../types';
+import { Report, AdminUser } from '../types/index.js';
 
-const STORAGE_KEY = 'nsl_corruption_reports';
-const RATE_LIMIT_KEY = 'nsl_last_submission_time';
-const RATE_LIMIT_MS = 60 * 1000; // 1 minute
-
-// Sample SVG data URLs for realistic mock evidence files
 const SAMPLE_RECEIPT_IMG =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23f1f5f9"/><text x="20" y="40" font-family="sans-serif" font-size="16" font-weight="bold" fill="%230b1f3a">የክፍያ ደረሰኝ ቅጂ / Payment Receipt Proof</text><line x1="20" y1="55" x2="380" y2="55" stroke="%23cbd5e1" stroke-width="2"/><text x="20" y="85" font-family="sans-serif" font-size="14" fill="%23334155">Official Fee: 250 ETB</text><text x="20" y="115" font-family="sans-serif" font-size="14" fill="%23dc2626" font-weight="bold">Unrecorded Cash Demanded: 15,000 ETB</text><text x="20" y="145" font-family="sans-serif" font-size="12" fill="%2364748b">Location: Woreda 03 Service Desk</text><rect x="20" y="170" width="160" height="70" fill="%23e2e8f0" rx="4"/><text x="30" y="210" font-family="sans-serif" font-size="12" fill="%23475569">[Official Stamp Seal]</text></svg>';
 
 const SAMPLE_DOCUMENT_PDF =
   'data:application/pdf;base64,JVBERi0xLjQKJcTl8uXrp/Og0MTGCjEgMCBvYmoKPDwKL1R5cGUgL0NhdGFsb2cKL1BhZ2VzIDIgMCBSCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbMyAwIFJdCi9Db3VudCAxCj4+CmVuZG9iagozIDAgb2JqCjw8Ci9UeXBlIC9QYWdlCi9QYXJlbnQgMiAwIFIKL01lZGlhQm94IFswIDAgNjEyIDc5Ml0KPj4KZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxOCAwMDAwMCBuIAowMDAwMDAwMDY5IDAwMDAwIG4gCjAwMDAwMDAxMjUgMDAwMDAgbiAKdHJhaWxlcgo8PAovU2l6ZSA0Ci9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgoxODMKJSVFT0YK';
 
-// Generates an ISO date offset by days
 const getPastDateISO = (daysAgo: number): string => {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
@@ -29,6 +16,13 @@ const getPastDateStr = (daysAgo: number): string => {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
   return d.toISOString().split('T')[0];
+};
+
+export const DEMO_ADMIN_USER: AdminUser = {
+  id: 1,
+  email: 'admin@nsl.gov.et',
+  name: 'Alemayehu Tadesse',
+  role: 'admin',
 };
 
 export const INITIAL_SEED_REPORTS: Report[] = [
@@ -134,7 +128,7 @@ export const INITIAL_SEED_REPORTS: Report[] = [
       'በአካባቢው ላልኖሩና መኖሪያቸው እዚህ ላልሆነ ሰዎች በገንዘብ ክፍያ ህገ-ወጥ የነዋሪነት መታወቂያ እና የልደት ምስክር ወረቀት ያለምንም የቤተሰብ ሰነድ ሲታደል ተመልክቻለሁ።',
     isAnonymous: true,
     evidence: [],
-    status: 'new', // Still new after 15 days -> Needs attention!
+    status: 'new',
     urgent: true,
     adminNotes: '',
     seen: false,
@@ -247,7 +241,7 @@ export const INITIAL_SEED_REPORTS: Report[] = [
         dataUrl: SAMPLE_DOCUMENT_PDF,
       },
     ],
-    status: 'under_review', // Under review for 12 days -> Needs attention!
+    status: 'under_review',
     urgent: true,
     adminNotes: 'የፈተና ወረቀቶች እና የቅጥር ቃለ-ጉባኤዎች እየተመረመሩ ነው።',
     seen: true,
@@ -376,7 +370,7 @@ export const INITIAL_SEED_REPORTS: Report[] = [
     reporterName: 'ምስጋናው ወርቁ',
     reporterPhone: '0944112233',
     evidence: [],
-    status: 'under_review', // Under review for 23 days -> Needs attention!
+    status: 'under_review',
     urgent: false,
     adminNotes: 'የግብር ሰነዶቹ ወደ ማዕከላዊ ኦዲት ተልከዋል።',
     seen: true,
@@ -450,460 +444,3 @@ export const INITIAL_SEED_REPORTS: Report[] = [
   },
 ];
 
-// Initialize storage with seed data if empty, and ensure urgent property is defined
-export const initializeReportsStorage = (): Report[] => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEED_REPORTS));
-      return INITIAL_SEED_REPORTS;
-    }
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEED_REPORTS));
-      return INITIAL_SEED_REPORTS;
-    }
-    // Ensure every report has urgent initialized
-    let needsResave = false;
-    const sanitized = parsed.map((r: any) => {
-      if (r.urgent === undefined) {
-        needsResave = true;
-        const matchingSeed = INITIAL_SEED_REPORTS.find((s) => s.id === r.id);
-        return { ...r, urgent: matchingSeed?.urgent || false };
-      }
-      return r;
-    });
-    if (needsResave) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-    }
-    return sanitized;
-  } catch {
-    return INITIAL_SEED_REPORTS;
-  }
-};
-
-export const reportService = {
-  getReports: (filters?: FilterOptions): Report[] => {
-    let reports = initializeReportsStorage();
-
-    if (!filters) {
-      return reports.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    }
-
-    if (filters.status && filters.status !== 'all') {
-      reports = reports.filter((r) => r.status === filters.status);
-    }
-
-    if (filters.type && filters.type !== 'all') {
-      reports = reports.filter((r) => r.type === filters.type);
-    }
-
-    if (filters.anonymousOnly) {
-      reports = reports.filter((r) => r.isAnonymous);
-    }
-
-    if (filters.dateFrom) {
-      const fromTime = new Date(filters.dateFrom).getTime();
-      reports = reports.filter((r) => new Date(r.createdAt).getTime() >= fromTime);
-    }
-
-    if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      reports = reports.filter((r) => new Date(r.createdAt).getTime() <= toDate.getTime());
-    }
-
-    if (filters.search && filters.search.trim()) {
-      const query = filters.search.trim().toLowerCase();
-      reports = reports.filter(
-        (r) =>
-          r.id.toLowerCase().includes(query) ||
-          r.office.toLowerCase().includes(query) ||
-          r.description.toLowerCase().includes(query) ||
-          r.location.toLowerCase().includes(query) ||
-          (r.personInvolved && r.personInvolved.toLowerCase().includes(query)) ||
-          (r.reporterName && r.reporterName.toLowerCase().includes(query))
-      );
-    }
-
-    return reports.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  },
-
-  getReportById: (id: string): Report | null => {
-    const reports = initializeReportsStorage();
-    return reports.find((r) => r.id === id) || null;
-  },
-
-  toggleUrgent: (id: string): Report | null => {
-    const reports = initializeReportsStorage();
-    const index = reports.findIndex((r) => r.id === id);
-    if (index === -1) return null;
-
-    const report = reports[index];
-    const newUrgent = !report.urgent;
-
-    const updatedReport: Report = {
-      ...report,
-      urgent: newUrgent,
-      log: [
-        {
-          id: `log-${Date.now()}`,
-          action: 'status_change',
-          adminEmail: 'admin@nsl.gov.et',
-          timestamp: new Date().toISOString(),
-          note: newUrgent ? 'Marked as urgent priority.' : 'Removed urgent priority flag.',
-        },
-        ...report.log,
-      ],
-    };
-
-    reports[index] = updatedReport;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
-    return updatedReport;
-  },
-
-  submitReport: (
-    input: CreateReportInput
-  ): { success: boolean; report?: Report; error?: string } => {
-    // 1. Bot Honeypot validation
-    if (input.honeypot && input.honeypot.trim() !== '') {
-      return { success: false, error: 'errorBotDetected' };
-    }
-
-    // 2. Client-side rate limiting (1 minute between submissions)
-    const lastSubTime = localStorage.getItem(RATE_LIMIT_KEY);
-    const now = Date.now();
-    if (lastSubTime) {
-      const elapsed = now - parseInt(lastSubTime, 10);
-      if (elapsed < RATE_LIMIT_MS) {
-        return { success: false, error: 'rateLimitWarning' };
-      }
-    }
-
-    // 3. Validation checks
-    if (!input.type) {
-      return { success: false, error: 'errorRequiredField' };
-    }
-    if (!input.office || !input.office.trim()) {
-      return { success: false, error: 'errorRequiredField' };
-    }
-    if (!input.incidentDate) {
-      return { success: false, error: 'errorRequiredField' };
-    }
-    const selectedDate = new Date(input.incidentDate);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    if (selectedDate > today) {
-      return { success: false, error: 'errorFutureDate' };
-    }
-    if (!input.location || !input.location.trim()) {
-      return { success: false, error: 'errorRequiredField' };
-    }
-    if (!input.description || input.description.trim().length < 30) {
-      return { success: false, error: 'errorDescTooShort' };
-    }
-
-    // Validate phone number format if provided
-    if (!input.isAnonymous && input.reporterPhone && input.reporterPhone.trim()) {
-      const cleanPhone = input.reporterPhone.replace(/[\s-]/g, '');
-      const etPhoneRegex = /^(?:\+2519|09|\+2517|07)\d{8}$/;
-      if (!etPhoneRegex.test(cleanPhone)) {
-        return { success: false, error: 'errorInvalidPhone' };
-      }
-    }
-
-    const currentReports = initializeReportsStorage();
-    const newSeq = currentReports.length + 1;
-    const padded = String(newSeq).padStart(4, '0');
-    const newId = `NSL-2026-${padded}`;
-
-    const newReport: Report = {
-      id: newId,
-      type: input.type,
-      office: input.office.trim(),
-      personInvolved: input.personInvolved?.trim() || undefined,
-      incidentDate: input.incidentDate,
-      location: input.location.trim(),
-      description: input.description.trim(),
-      isAnonymous: input.isAnonymous,
-      reporterName: input.isAnonymous ? undefined : input.reporterName?.trim() || undefined,
-      reporterPhone: input.isAnonymous ? undefined : input.reporterPhone?.trim() || undefined,
-      evidence: input.evidence || [],
-      status: 'new',
-      urgent: false,
-      adminNotes: '',
-      seen: false,
-      createdAt: new Date().toISOString(),
-      log: [
-        {
-          id: `log-${Date.now()}`,
-          action: 'created',
-          adminEmail: 'system',
-          timestamp: new Date().toISOString(),
-          note: 'Report submitted via public portal.',
-        },
-      ],
-    };
-
-    const updatedList = [newReport, ...currentReports];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
-    localStorage.setItem(RATE_LIMIT_KEY, String(now));
-
-    return { success: true, report: newReport };
-  },
-
-  markAsSeen: (id: string): Report | null => {
-    const reports = initializeReportsStorage();
-    const index = reports.findIndex((r) => r.id === id);
-    if (index === -1) return null;
-
-    const report = reports[index];
-    if (report.seen) return report;
-
-    const updatedReport: Report = {
-      ...report,
-      seen: true,
-      log: [
-        ...report.log,
-        {
-          id: `log-${Date.now()}`,
-          action: 'marked_seen',
-          adminEmail: 'admin@nsl.gov.et',
-          timestamp: new Date().toISOString(),
-          note: 'Report opened and marked as seen.',
-        },
-      ],
-    };
-
-    reports[index] = updatedReport;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
-    return updatedReport;
-  },
-
-  updateReportStatus: (
-    id: string,
-    newStatus: ReportStatus,
-    note: string,
-    adminEmail: string
-  ): Report | null => {
-    const reports = initializeReportsStorage();
-    const index = reports.findIndex((r) => r.id === id);
-    if (index === -1) return null;
-
-    const report = reports[index];
-    const prevStatus = report.status;
-
-    const newLogItem: DecisionLog = {
-      id: `log-${Date.now()}`,
-      action: 'status_change',
-      fromStatus: prevStatus,
-      toStatus: newStatus,
-      note: note.trim() || undefined,
-      adminEmail,
-      timestamp: new Date().toISOString(),
-    };
-
-    const updatedReport: Report = {
-      ...report,
-      status: newStatus,
-      adminNotes: note.trim() ? note.trim() : report.adminNotes,
-      seen: true,
-      log: [newLogItem, ...report.log],
-    };
-
-    reports[index] = updatedReport;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
-    return updatedReport;
-  },
-
-  updateReportNotes: (
-    id: string,
-    notes: string,
-    adminEmail: string
-  ): Report | null => {
-    const reports = initializeReportsStorage();
-    const index = reports.findIndex((r) => r.id === id);
-    if (index === -1) return null;
-
-    const report = reports[index];
-
-    const newLogItem: DecisionLog = {
-      id: `log-${Date.now()}`,
-      action: 'note_added',
-      note: notes.trim(),
-      adminEmail,
-      timestamp: new Date().toISOString(),
-    };
-
-    const updatedReport: Report = {
-      ...report,
-      adminNotes: notes.trim(),
-      seen: true,
-      log: [newLogItem, ...report.log],
-    };
-
-    reports[index] = updatedReport;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
-    return updatedReport;
-  },
-
-  getReportStats: (daysRange: 7 | 30 | 90 = 30) => {
-    const reports = initializeReportsStorage();
-    const now = Date.now();
-    const sevenDaysAgo = now - 7 * 86400000;
-
-    // Filter reports within the last 7 days for "this week" change calculation
-    const thisWeekReports = reports.filter(
-      (r) => new Date(r.createdAt).getTime() >= sevenDaysAgo
-    );
-
-    const counts = {
-      total: reports.length,
-      new: reports.filter((r) => r.status === 'new').length,
-      underReview: reports.filter((r) => r.status === 'under_review').length,
-      investigating: reports.filter((r) => r.status === 'investigating').length,
-      resolved: reports.filter((r) => r.status === 'resolved').length,
-      rejected: reports.filter((r) => r.status === 'rejected').length,
-    };
-
-    const thisWeek = {
-      total: thisWeekReports.length,
-      new: thisWeekReports.filter((r) => r.status === 'new').length,
-      underReview: thisWeekReports.filter((r) => r.status === 'under_review').length,
-      investigating: thisWeekReports.filter((r) => r.status === 'investigating').length,
-      resolved: thisWeekReports.filter((r) => r.status === 'resolved').length,
-      rejected: thisWeekReports.filter((r) => r.status === 'rejected').length,
-    };
-
-    // By status (Donut Chart)
-    const byStatus = [
-      { status: 'new', count: counts.new, color: '#F5B700' }, // Gold accent
-      { status: 'under_review', count: counts.underReview, color: '#2563eb' }, // Blue
-      { status: 'investigating', count: counts.investigating, color: '#0B1F3A' }, // Primary Navy
-      { status: 'resolved', count: counts.resolved, color: '#10b981' }, // Emerald
-      { status: 'rejected', count: counts.rejected, color: '#f43f5e' }, // Rose
-    ].filter((item) => item.count > 0);
-
-    // By corruption type (Bar Chart)
-    const allTypes: CorruptionType[] = [
-      'bribery',
-      'abuse_of_power',
-      'fake_documents',
-      'embezzlement',
-      'favoritism',
-      'illegal_land_housing',
-      'other',
-    ];
-
-    const byType = allTypes.map((type) => ({
-      type,
-      count: reports.filter((r) => r.type === type).length,
-    }));
-
-    // Over time with dynamic daysRange (7, 30, or 90 days)
-    const daysMap: Record<string, number> = {};
-    for (let i = daysRange - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateKey = d.toISOString().split('T')[0];
-      daysMap[dateKey] = 0;
-    }
-
-    reports.forEach((r) => {
-      const dateKey = r.createdAt.split('T')[0];
-      if (daysMap[dateKey] !== undefined) {
-        daysMap[dateKey] += 1;
-      }
-    });
-
-    const overTime = Object.entries(daysMap).map(([date, count]) => ({
-      date,
-      count,
-    }));
-
-    // Top Reported Offices / Departments
-    const officeCounts: Record<string, number> = {};
-    reports.forEach((r) => {
-      // Clean office label for grouping
-      const key = r.office.split('(')[0].trim();
-      officeCounts[key] = (officeCounts[key] || 0) + 1;
-    });
-
-    const topOffices = Object.entries(officeCounts)
-      .map(([name, count]) => ({
-        name,
-        count,
-        percentage: Math.round((count / (reports.length || 1)) * 100),
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    // Hotspots by Kebele / Woreda
-    const kebeleCounts: Record<string, number> = {};
-    reports.forEach((r) => {
-      let area = 'ወረዳ 09 (Lafto)';
-      if (r.location.includes('ወረዳ 01') || r.location.includes('ሳሪስ')) area = 'ወረዳ 01 (Saris)';
-      else if (r.location.includes('ወረዳ 02') || r.location.includes('ጎተራ')) area = 'ወረዳ 02 (Gotera)';
-      else if (r.location.includes('ወረዳ 04') || r.location.includes('ቄራ')) area = 'ወረዳ 04 (Kera)';
-      else if (r.location.includes('ወረዳ 05') || r.location.includes('ጦር ኃይሎች')) area = 'ወረዳ 05 (Tor Hailoch)';
-      else if (r.location.includes('ወረዳ 06') || r.location.includes('መካኒሳ')) area = 'ወረዳ 06 (Mekanisa)';
-      else if (r.location.includes('ወረዳ 07')) area = 'ወረዳ 07 (Lafto Health)';
-      else if (r.location.includes('ወረዳ 08') || r.location.includes('ጀሞ')) area = 'ወረዳ 08 (Jemo 1)';
-      else if (r.location.includes('ወረዳ 09') || r.location.includes('ላፍቶ')) area = 'ወረዳ 09 (Lafto Square)';
-      else if (r.location.includes('ወረዳ 10') || r.location.includes('ለቡ')) area = 'ወረዳ 10 (Lebu)';
-      else if (r.location.includes('ወረዳ 11') || r.location.includes('ኃይሌ ጋርመንት')) area = 'ወረዳ 11 (Haile Garment)';
-      else if (r.location.includes('ወረዳ 12')) area = 'ወረዳ 12 (Woreda Center)';
-      kebeleCounts[area] = (kebeleCounts[area] || 0) + 1;
-    });
-
-    const byKebele = Object.entries(kebeleCounts)
-      .map(([name, count]) => ({
-        name,
-        count,
-        percentage: Math.round((count / (reports.length || 1)) * 100),
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    // Urgent Reports Pinned
-    const urgentReports = reports
-      .filter((r) => r.urgent === true)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    // "Needs Attention" List: reports still New or Under Review for more than 7 days, oldest first
-    const needsAttentionReports = reports
-      .filter(
-        (r) =>
-          (r.status === 'new' || r.status === 'under_review') &&
-          now - new Date(r.createdAt).getTime() >= 7 * 86400000
-      )
-      .map((r) => {
-        const daysWaiting = Math.floor((now - new Date(r.createdAt).getTime()) / 86400000);
-        return {
-          ...r,
-          daysWaiting,
-        };
-      })
-      .sort((a, b) => b.daysWaiting - a.daysWaiting); // Oldest first
-
-    return {
-      ...counts,
-      thisWeek,
-      byStatus,
-      byType,
-      overTime,
-      topOffices,
-      byKebele,
-      urgentReports,
-      needsAttentionReports,
-    };
-  },
-
-  resetToSeedData: (): void => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEED_REPORTS));
-  },
-};

@@ -55,12 +55,12 @@ export const translations = {
 
     // Evidence
     evidenceTitle: 'ማስረጃ ማያያዝ (አማራጭ)',
-    evidenceSubtitle: 'ፎቶዎች (JPG/PNG)፣ ፒዲኤፍ (PDF)፣ ወይም የድምፅ ቅጂ ፋይል ማያያዝ ይችላሉ (ከፍተኛ 5 ፋይሎች፣ እያንዳንዱ እስከ 10MB)',
+    evidenceSubtitle: 'ማስረጃዎችን ያያይዙ፦ ፎቶዎች፣ ቪዲዮዎች፣ ፒዲኤፍ (PDF)፣ ዎርድ (Word)፣ ኤክሴል (Excel) ወይም የድምፅ ቅጂ (እስከ 5 ፋይሎች፣ እያንዳንዱ እስከ 25MB)',
     dragDropText: 'ፋይሎችን እዚህ ይጎትቱ ወይም',
     browseFiles: 'ፋይል ይምረጡ',
     evidenceLimitReached: 'ከፍተኛው 5 ፋይሎች ተደርሷል',
-    fileSizeError: 'የፋይሉ መጠን ከ 10MB መብለጥ የለበትም',
-    fileTypeError: 'የተፈቀዱት ምስሎች (JPG/PNG)፣ ፒዲኤፍ (PDF) እና ድምፅ ፋይሎች ብቻ ናቸው',
+    fileSizeError: 'የፋይሉ መጠን ከ 25MB መብለጥ የለበትም',
+    fileTypeError: 'የተደገፉት ፋይሎች፦ ምስሎች፣ ቪዲዮዎች፣ ፒዲኤፍ (PDF)፣ ዎርድ (Word)፣ ኤክሴል (Excel) እና ድምፅ ፋይሎች ናቸው',
     removeFile: 'ፋይል አስወግድ',
 
     // Audio recording
@@ -204,6 +204,11 @@ export const translations = {
     audioEvidence: 'የድምፅ ማስረጃ',
     pdfEvidence: 'የሰነድ ማስረጃ (PDF)',
     imageEvidence: 'የምስል ማስረጃ',
+    wordEvidence: 'የዎርድ ሰነድ (Word)',
+    excelEvidence: 'የኤክሴል ሰንጠረዥ (Excel)',
+    videoEvidence: 'የቪዲዮ ማስረጃ (Video)',
+    docEvidence: 'ሰነድ / ፋይል (File)',
+    videoPreview: 'የቪዲዮ ማጫወቻ',
 
     // Admin Action panel
     caseManagementTitle: 'የጉዳይ አያያዝ እና ውሳኔ',
@@ -221,8 +226,15 @@ export const translations = {
     // QR Code Page
     qrPageTitle: 'የህዝብ ጥቆማ መቀበያ QR ኮድ',
     qrPageSubtitle: 'ይህን ፖስተር በማተም በክፍለ ከተማውና በወረዳ ጽሕፈት ቤቶች ለህዝብ ግልጽ በሆነ ቦታ ይለጥፉ። ዜጎች በስልካቸው በመቃኘት ወዲያውኑ ጥቆማ መስጠት ይችላሉ።',
-    downloadQrPng: 'ፖስተሩን አውርድ (PNG)',
+    downloadQrPng: 'ሙሉ ፖስተሩን አውርድ (PNG)',
+    downloadQrOnlyPng: 'የQR ኮድ ብቻ (PNG)',
+    downloadQrOnlySvg: 'የQR ቬክተር (SVG)',
     printPosterBtn: 'ፖስተሩን አትም (Print)',
+    qrTargetUrlLabel: 'የQR ኮድ መድረሻ አድራሻ (Destination URL)',
+    qrPresetLocal: 'የሞባይል ሙከራ (Local Wi-Fi IP)',
+    qrPresetCurrent: 'የአሁኑ አድራሻ (Current Host)',
+    qrPresetCustom: 'የተጠቃሚ ምርጫ አድራሻ (Custom Domain / URL)',
+    qrScanHint: 'ጠቃሚ ምክር፡ በሞባይል ስልክ ሲቃኙ በኮምፒዩተሩ የአውታረ-መረብ አድራሻ (Wi-Fi IP) መሆን አለበት። "localhost" በውጭ ስልክ ላይ አይሰራም።',
     officialNoticeHeader: 'የንፋስ ስልክ ላፍቶ ክፍለ ከተማ አስተዳደር',
     scanToReportEth: 'ሙስናን ለመጠቆም ይህንን ይቃኙ',
     scanToReportEng: 'Scan to Report Corruption',
@@ -285,12 +297,12 @@ export const translations = {
 
     // Evidence
     evidenceTitle: 'Upload Evidence (Optional)',
-    evidenceSubtitle: 'Attach photos (JPG/PNG), PDFs, or voice note recordings (Max 5 files, up to 10MB each)',
+    evidenceSubtitle: 'Attach evidence: Photos, Videos, PDFs, Word (.docx), Excel (.xlsx), or Voice recordings (Max 5 files, up to 25MB each)',
     dragDropText: 'Drag and drop files here, or',
     browseFiles: 'browse files',
     evidenceLimitReached: 'Maximum 5 files reached',
-    fileSizeError: 'File size exceeds 10MB limit',
-    fileTypeError: 'Only images (JPG/PNG), PDF documents, and audio recordings are supported',
+    fileSizeError: 'File size exceeds 25MB limit',
+    fileTypeError: 'Supported formats: Images, Videos, PDF, Word (.doc/.docx), Excel (.xls/.xlsx/.csv), and Audio recordings',
     removeFile: 'Remove file',
 
     // Audio recording
@@ -434,6 +446,11 @@ export const translations = {
     audioEvidence: 'Audio Voice Note',
     pdfEvidence: 'PDF Document',
     imageEvidence: 'Photo Evidence',
+    wordEvidence: 'Word Document',
+    excelEvidence: 'Excel Spreadsheet',
+    videoEvidence: 'Video Recording',
+    docEvidence: 'Document / File',
+    videoPreview: 'Video Player',
 
     // Admin Action panel
     caseManagementTitle: 'Case Management & Decision',
@@ -451,8 +468,15 @@ export const translations = {
     // QR Code Page
     qrPageTitle: 'Citizen QR Code Poster',
     qrPageSubtitle: 'Print and display this QR code poster at sub-city bureaus, woreda customer service desks, and public boards to invite citizens to report misconduct directly.',
-    downloadQrPng: 'Download Poster (PNG)',
+    downloadQrPng: 'Download Full Poster (PNG)',
+    downloadQrOnlyPng: 'Download QR Only (PNG)',
+    downloadQrOnlySvg: 'Download QR Vector (SVG)',
     printPosterBtn: 'Print Poster',
+    qrTargetUrlLabel: 'QR Code Target Destination URL',
+    qrPresetLocal: 'Mobile Phone Testing (Local Wi-Fi IP)',
+    qrPresetCurrent: 'Current Host URL',
+    qrPresetCustom: 'Custom Domain / URL',
+    qrScanHint: 'Tip: To scan successfully with a mobile phone during local development, select the Local Wi-Fi IP. Localhost will not resolve on an external phone.',
     officialNoticeHeader: 'Nifas Silk-Lafto Sub-City Administration',
     scanToReportEth: 'ሙስናን ለመጠቆም ይህንን ይቃኙ',
     scanToReportEng: 'Scan to Report Corruption',

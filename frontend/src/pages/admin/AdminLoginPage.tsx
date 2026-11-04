@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { authService, DEMO_ADMIN } from '../../services/authService';
+import { authService } from '../../services/authService';
 import { useLanguage } from '../../context/LanguageContext';
 import { OfficialEmblem } from '../../components/OfficialEmblem';
 import { Lock, Mail, KeyRound, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
@@ -23,7 +23,7 @@ export const AdminLoginPage: React.FC = () => {
     }
   }, [navigate, location]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -33,21 +33,30 @@ export const AdminLoginPage: React.FC = () => {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      const res = authService.login(email, password);
+    try {
+      const res = await authService.login(email, password);
       setLoading(false);
       if (res.success) {
         const dest = (location.state as any)?.from || '/admin';
         navigate(dest, { replace: true });
       } else {
-        setError(t('invalidCredentials'));
+        setError(
+          res.error === 'invalidCredentials'
+            ? t('invalidCredentials')
+            : res.error || t('invalidCredentials')
+        );
       }
-    }, 300);
+    } catch (err: any) {
+      setLoading(false);
+      setError(err.message || 'Login error');
+    }
   };
 
   const handleFillDemo = () => {
-    setEmail(DEMO_ADMIN.email);
-    setPassword('admin123');
+    setEmail('admin@nsl.gov.et');
+    if (import.meta.env.DEV) {
+      setPassword('admin123');
+    }
     setError(null);
   };
 

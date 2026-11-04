@@ -19,12 +19,11 @@ const storageMock = (() => {
 })();
 
 // Attach to globalThis before importing service
-if (typeof globalThis.localStorage === 'undefined') {
-  Object.defineProperty(globalThis, 'localStorage', {
-    value: storageMock,
-    writable: true,
-  });
-}
+Object.defineProperty(globalThis, 'localStorage', {
+  value: storageMock,
+  writable: true,
+  configurable: true,
+});
 
 import { reportService, INITIAL_SEED_REPORTS } from './reportService';
 
@@ -57,9 +56,9 @@ test('reportService search filter finds matching reports', () => {
   });
 });
 
-test('reportService enforces min 30 characters on description and validates honeypot', () => {
+test('reportService enforces min 30 characters on description and validates honeypot', async () => {
   // Test honeypot
-  const botResult = reportService.submitReport({
+  const botResult = await reportService.submitReport({
     type: 'bribery',
     office: 'Land Management',
     incidentDate: '2026-10-25',
@@ -73,7 +72,7 @@ test('reportService enforces min 30 characters on description and validates hone
   assert.equal(botResult.error, 'errorBotDetected');
 
   // Test short description
-  const shortResult = reportService.submitReport({
+  const shortResult = await reportService.submitReport({
     type: 'bribery',
     office: 'Land Management',
     incidentDate: '2026-10-25',
@@ -86,11 +85,11 @@ test('reportService enforces min 30 characters on description and validates hone
   assert.equal(shortResult.error, 'errorDescTooShort');
 });
 
-test('reportService successfully submits a report and updates stats', () => {
+test('reportService successfully submits a report and updates stats', async () => {
   // Clear rate limit for clean test run
   localStorage.removeItem('nsl_last_submission_time');
 
-  const res = reportService.submitReport({
+  const res = await reportService.submitReport({
     type: 'bribery',
     office: 'Woreda 05 Trade Office',
     incidentDate: '2026-10-28',

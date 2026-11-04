@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { reportService } from '../../services/reportService';
 import { authService } from '../../services/authService';
+import { resolveFileUrl } from '../../services/apiClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, ReportStatus, CorruptionType } from '../../types';
@@ -15,6 +16,8 @@ import {
   Clock,
   ShieldAlert,
   FileText,
+  FileSpreadsheet,
+  Video,
   Download,
   ExternalLink,
   Save,
@@ -319,9 +322,28 @@ export const ReportDetailPage: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {report.evidence.map((ev) => {
-                  const isImg = ev.type.startsWith('image/');
-                  const isAudio = ev.type.startsWith('audio/');
-                  const isPdf = ev.type.includes('pdf');
+                  const fileUrl = resolveFileUrl(ev.dataUrl);
+                  const downloadUrl = fileUrl.includes('?') ? `${fileUrl}&download=1` : `${fileUrl}?download=1`;
+                  const isImg = ev.type.startsWith('image/') || ev.name.match(/\.(jpg|jpeg|png|webp|svg|gif)$/i);
+                  const isAudio = ev.type.startsWith('audio/') || ev.name.match(/\.(mp3|wav|ogg|webm|m4a|aac)$/i);
+                  const isVideo = ev.type.startsWith('video/') || ev.name.match(/\.(mp4|mov|avi|webm|mkv)$/i);
+                  const isSpreadsheet = ev.type.includes('excel') || ev.type.includes('spreadsheet') || ev.type.includes('csv') || ev.name.match(/\.(xls|xlsx|csv)$/i);
+                  const isWord = ev.type.includes('word') || ev.name.match(/\.(doc|docx)$/i);
+                  const isPdf = ev.type.includes('pdf') || ev.name.endsWith('.pdf');
+
+                  const typeLabel = isImg
+                    ? t('imageEvidence')
+                    : isVideo
+                    ? t('videoEvidence')
+                    : isAudio
+                    ? t('audioEvidence')
+                    : isSpreadsheet
+                    ? t('excelEvidence')
+                    : isWord
+                    ? t('wordEvidence')
+                    : isPdf
+                    ? t('pdfEvidence')
+                    : t('docEvidence');
 
                   return (
                     <div
@@ -332,18 +354,30 @@ export const ReportDetailPage: React.FC = () => {
                         {isImg ? (
                           <button
                             type="button"
-                            onClick={() => setSelectedImageModal(ev.dataUrl)}
+                            onClick={() => setSelectedImageModal(fileUrl)}
                             className="w-16 h-16 rounded-xl bg-slate-200 overflow-hidden shrink-0 border border-slate-300 hover:opacity-90 transition-opacity"
                           >
                             <img
-                              src={ev.dataUrl}
+                              src={fileUrl}
                               alt={ev.name}
                               className="w-full h-full object-cover"
                             />
                           </button>
+                        ) : isVideo ? (
+                          <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                            <Video className="w-6 h-6" />
+                          </div>
                         ) : isAudio ? (
                           <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
                             <Music className="w-6 h-6" />
+                          </div>
+                        ) : isSpreadsheet ? (
+                          <div className="w-12 h-12 rounded-xl bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+                            <FileSpreadsheet className="w-6 h-6" />
+                          </div>
+                        ) : isWord ? (
+                          <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                            <FileText className="w-6 h-6" />
                           </div>
                         ) : (
                           <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
@@ -356,21 +390,28 @@ export const ReportDetailPage: React.FC = () => {
                             {ev.name}
                           </p>
                           <p className="text-[11px] text-slate-500 mt-0.5">
-                            {formatFileSize(ev.size)} • {isImg ? t('imageEvidence') : isAudio ? t('audioEvidence') : t('pdfEvidence')}
+                            {formatFileSize(ev.size)} • {typeLabel}
                           </p>
                         </div>
                       </div>
 
-                      {/* Embedded Audio Player */}
-                      {isAudio && (
+                      {/* Embedded Video Player */}
+                      {isVideo && (
                         <div className="pt-1">
-                          <audio controls src={ev.dataUrl} className="w-full h-8" />
+                          <video controls src={fileUrl} className="w-full max-h-48 rounded-xl bg-black" />
                         </div>
                       )}
 
-                      {/* Download link */}
+                      {/* Embedded Audio Player */}
+                      {isAudio && (
+                        <div className="pt-1">
+                          <audio controls src={fileUrl} className="w-full h-8" />
+                        </div>
+                      )}
+
+                      {/* Download link with original filename and extension */}
                       <a
-                        href={ev.dataUrl}
+                        href={downloadUrl}
                         download={ev.name}
                         target="_blank"
                         rel="noreferrer"
@@ -492,7 +533,7 @@ export const ReportDetailPage: React.FC = () => {
         >
           <div className="relative max-w-3xl max-h-[90vh] bg-white rounded-2xl overflow-hidden p-2">
             <img
-              src={selectedImageModal}
+              src={resolveFileUrl(selectedImageModal)}
               alt="Enlarged Evidence Preview"
               className="max-h-[80vh] w-auto mx-auto object-contain"
             />

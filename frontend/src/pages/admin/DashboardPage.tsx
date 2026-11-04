@@ -63,6 +63,12 @@ export const DashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
+    reportService.syncWithBackend().then((synced) => {
+      if (synced) refreshData(timeRange);
+    });
+  }, []);
+
+  useEffect(() => {
     refreshData(timeRange);
   }, [timeRange]);
 
