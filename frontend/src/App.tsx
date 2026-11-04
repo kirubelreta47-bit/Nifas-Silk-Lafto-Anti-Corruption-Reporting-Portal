@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
+import { BackendConnectionBar } from './components/BackendConnectionBar';
 
 // Pages
 import { PublicReportPage } from './pages/PublicReportPage';
@@ -18,6 +19,7 @@ export default function App() {
     <LanguageProvider>
       <BrowserRouter>
         <div className="min-h-screen flex flex-col bg-white text-[#0B1F3A]">
+          <BackendConnectionBar />
           <Header />
           <div className="flex-1">
             <Routes>

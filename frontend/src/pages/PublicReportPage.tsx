@@ -42,6 +42,11 @@ const COMMON_OFFICES = [
   { am: 'የወረዳ ደንብ ማስከበር', en: 'Woreda Code Enforcement' },
 ];
 
+interface EvidenceAttachment extends EvidenceItem {
+  rawFile?: File;
+  uploaded?: boolean;
+}
+
 export const PublicReportPage: React.FC = () => {
   const { t, lang } = useLanguage();
 
@@ -57,7 +62,7 @@ export const PublicReportPage: React.FC = () => {
   });
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
-  const [evidenceList, setEvidenceList] = useState<EvidenceItem[]>([]);
+  const [evidenceList, setEvidenceList] = useState<EvidenceAttachment[]>([]);
   const [honeypot, setHoneypot] = useState('');
 
   // UI / Submission states
@@ -89,68 +94,54 @@ export const PublicReportPage: React.FC = () => {
       return;
     }
 
-    // Supported MIME types and extensions covering PDF, Word, Excel, Images, Video, Audio, Archives
-    const validMimes = [
-      'image/',
-      'video/',
-      'audio/',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'text/csv',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'text/plain',
-      'application/zip',
-      'application/x-zip-compressed',
-      'application/x-rar-compressed',
-    ];
-
     const allowedExtensionsRegex =
       /\.(jpg|jpeg|png|webp|svg|gif|bmp|pdf|doc|docx|xls|xlsx|csv|ppt|pptx|txt|mp3|wav|ogg|webm|m4a|aac|flac|mp4|mov|avi|mkv|3gp|wmv|zip|rar)$/i;
 
-    Array.from(files).forEach(async (file) => {
+    Array.from(files).forEach((file) => {
       // 25MB limit per file
       if (file.size > 25 * 1024 * 1024) {
         setFileError(`${file.name}: ${t('fileSizeError')}`);
         return;
       }
 
-      const isValidType = validMimes.some((prefixOrMime) =>
-        file.type.toLowerCase().startsWith(prefixOrMime) || file.type === prefixOrMime
-      );
+      const isValidType =
+        file.type.startsWith('image/') ||
+        file.type.startsWith('video/') ||
+        file.type.startsWith('audio/') ||
+        file.type.includes('pdf') ||
+        file.type.includes('word') ||
+        file.type.includes('excel') ||
+        file.type.includes('sheet') ||
+        file.type.includes('presentation') ||
+        file.type.includes('zip') ||
+        file.type.includes('text') ||
+        file.name.match(allowedExtensionsRegex);
 
-      if (!isValidType && !file.name.match(allowedExtensionsRegex)) {
+      if (!isValidType) {
         setFileError(`${file.name}: ${t('fileTypeError')}`);
         return;
       }
 
-      // Upload to backend storage (Cloudflare R2)
-      try {
-        const uploadedItem = await apiClient.uploadFile(file);
-        setEvidenceList((prev) => [...prev, uploadedItem].slice(0, 5));
-      } catch (uploadErr: any) {
-        // In local development offline fallback: read locally as Data URL
-        if (import.meta.env.DEV) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const dataUrl = event.target?.result as string;
-            const newItem: EvidenceItem = {
-              id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-              name: file.name,
-              type: file.type || 'application/octet-stream',
-              size: file.size,
-              dataUrl,
-            };
-            setEvidenceList((prev) => [...prev, newItem].slice(0, 5));
-          };
-          reader.readAsDataURL(file);
-        } else {
-          setFileError(`${file.name}: ${uploadErr.message || 'File upload failed'}`);
-        }
-      }
+      // Read file immediately into client memory using FileReader
+      // This guarantees the image thumbnail or file tag appears on screen INSTANTLY without network failure!
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        const newItem: EvidenceAttachment = {
+          id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          name: file.name,
+          type: file.type || 'image/jpeg',
+          size: file.size,
+          dataUrl,
+          rawFile: file,
+          uploaded: false,
+        };
+        setEvidenceList((prev) => [...prev, newItem].slice(0, 5));
+      };
+      reader.onerror = () => {
+        setFileError(`${file.name}: Failed to read file`);
+      };
+      reader.readAsDataURL(file);
     });
 
     e.target.value = '';
@@ -214,6 +205,35 @@ export const PublicReportPage: React.FC = () => {
 
     setIsSubmitting(true);
 
+    // 1. Upload any pending raw files to backend storage
+    const preparedEvidence: EvidenceItem[] = [];
+    for (const ev of evidenceList) {
+      if (ev.rawFile && !ev.uploaded) {
+        try {
+          const uploaded = await apiClient.uploadFile(ev.rawFile);
+          preparedEvidence.push(uploaded);
+        } catch (uploadErr) {
+          console.warn(`File upload fallback to inline data:`, uploadErr);
+          // If upload fails, retain dataUrl so the citizen's evidence is preserved
+          preparedEvidence.push({
+            id: ev.id,
+            name: ev.name,
+            type: ev.type,
+            size: ev.size,
+            dataUrl: ev.dataUrl,
+          });
+        }
+      } else {
+        preparedEvidence.push({
+          id: ev.id,
+          name: ev.name,
+          type: ev.type,
+          size: ev.size,
+          dataUrl: ev.dataUrl,
+        });
+      }
+    }
+
     const inputData: CreateReportInput = {
       type: corruptionType as CorruptionType,
       office: office.trim(),
@@ -224,7 +244,7 @@ export const PublicReportPage: React.FC = () => {
       isAnonymous,
       reporterName: isAnonymous ? undefined : reporterName.trim() || undefined,
       reporterPhone: isAnonymous ? undefined : reporterPhone.trim() || undefined,
-      evidence: evidenceList,
+      evidence: preparedEvidence,
       honeypot: honeypot.trim() || undefined,
     };
 
@@ -761,7 +781,13 @@ export const PublicReportPage: React.FC = () => {
                       className="flex items-center justify-between gap-3 p-3 bg-[#F8FAFC] rounded-xl border border-slate-200 text-xs sm:text-sm"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        {isAudio ? (
+                        {isImg && file.dataUrl ? (
+                          <img
+                            src={file.dataUrl}
+                            alt={file.name}
+                            className="w-8 h-8 rounded-lg object-cover shrink-0 border border-slate-300"
+                          />
+                        ) : isAudio ? (
                           <Music className="w-4 h-4 text-purple-700 shrink-0" />
                         ) : isVideo ? (
                           <Video className="w-4 h-4 text-indigo-700 shrink-0" />
