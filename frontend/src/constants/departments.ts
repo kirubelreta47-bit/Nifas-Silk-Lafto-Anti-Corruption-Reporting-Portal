@@ -97,6 +97,25 @@ export function resolveDepartment(query: string | null | undefined): DepartmentD
 }
 
 /**
+ * Match a report's office field to a known department
+ */
+export function matchReportToDepartment(officeStr: string): DepartmentDef | null {
+  if (!officeStr) return null;
+  const lower = officeStr.toLowerCase();
+  for (const dept of COMMON_DEPARTMENTS) {
+    if (
+      lower.includes(dept.id.toLowerCase()) ||
+      lower.includes(dept.code.toLowerCase()) ||
+      lower.includes(dept.en.toLowerCase()) ||
+      officeStr.includes(dept.am)
+    ) {
+      return dept;
+    }
+  }
+  return null;
+}
+
+/**
  * Format department for submission to backend / Neon PostgreSQL
  */
 export function formatDepartmentSubmission(dept: DepartmentDef): string {
@@ -105,3 +124,4 @@ export function formatDepartmentSubmission(dept: DepartmentDef): string {
   }
   return `${dept.en} (${dept.am})`;
 }
+

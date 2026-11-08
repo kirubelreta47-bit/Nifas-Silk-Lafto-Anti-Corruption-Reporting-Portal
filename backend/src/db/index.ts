@@ -242,6 +242,9 @@ export const getDatabaseStatus = (): { connected: boolean; engine: string } => {
 // ==========================================
 
 export const db = {
+  _setConnectedForTesting(val: boolean) {
+    isConnectedToPostgres = val;
+  },
   // Admin Lookup by Email
   async getAdminByEmail(email: string): Promise<DbAdminUser | null> {
     if (isConnectedToPostgres && pool) {

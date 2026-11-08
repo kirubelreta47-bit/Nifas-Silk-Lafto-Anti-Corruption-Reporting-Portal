@@ -4,6 +4,7 @@ import { reportService } from '../../services/reportService';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, CorruptionType, ReportStatus } from '../../types';
+import { COMMON_DEPARTMENTS, DepartmentDef } from '../../constants/departments';
 import {
   FileText,
   AlertCircle,
@@ -24,6 +25,11 @@ import {
   Layers,
   Flame,
   Check,
+  ShieldAlert,
+  QrCode,
+  ExternalLink,
+  ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -49,34 +55,43 @@ export const DashboardPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState<7 | 30 | 90>(30);
   const [loading, setLoading] = useState(false);
 
+  // Department Drilldown Filter state
+  const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
+
   // Stats and reports state
   const [stats, setStats] = useState(() => reportService.getReportStats(30));
   const [reports, setReports] = useState<Report[]>(() => reportService.getReports());
 
-  const refreshData = (days: 7 | 30 | 90 = timeRange) => {
+  const selectedDeptDef = useMemo(() => {
+    if (selectedDeptId === 'all') return null;
+    return COMMON_DEPARTMENTS.find((d) => d.id === selectedDeptId) || null;
+  }, [selectedDeptId]);
+
+  const refreshData = (days: 7 | 30 | 90 = timeRange, deptId: string = selectedDeptId) => {
     setLoading(true);
     setTimeout(() => {
-      setStats(reportService.getReportStats(days));
-      setReports(reportService.getReports());
+      const officeParam = deptId === 'all' ? undefined : COMMON_DEPARTMENTS.find((d) => d.id === deptId)?.en;
+      setStats(reportService.getReportStats(days, officeParam));
+      setReports(reportService.getReports(officeParam ? { office: officeParam } : undefined));
       setLoading(false);
-    }, 150);
+    }, 100);
   };
 
   useEffect(() => {
     reportService.syncWithBackend().then((synced) => {
-      if (synced) refreshData(timeRange);
+      if (synced) refreshData(timeRange, selectedDeptId);
     });
   }, []);
 
   useEffect(() => {
-    refreshData(timeRange);
-  }, [timeRange]);
+    refreshData(timeRange, selectedDeptId);
+  }, [timeRange, selectedDeptId]);
 
   const handleToggleUrgent = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
     reportService.toggleUrgent(id);
-    refreshData(timeRange);
+    refreshData(timeRange, selectedDeptId);
   };
 
   const getCorruptionTypeLabel = (type: CorruptionType) => {
@@ -244,21 +259,147 @@ export const DashboardPage: React.FC = () => {
           </p>
         </div>
 
-        <Link
-          to="/admin/reports"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-[#0B1F3A] hover:bg-[#122b4d] text-white shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-[#F5B700] self-start sm:self-auto cursor-pointer"
-        >
-          <span>{t('viewAllReports')}</span>
-          <ArrowRight className="w-4 h-4 text-[#F5B700]" />
-        </Link>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link
+            to="/admin/qr-code"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 text-[#0B1F3A] border border-slate-300 transition-all cursor-pointer shadow-xs"
+          >
+            <QrCode className="w-4 h-4 text-[#0B1F3A]" />
+            <span>{t('adminQrCode')}</span>
+          </Link>
+
+          <Link
+            to="/admin/reports"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-[#0B1F3A] hover:bg-[#122b4d] text-white shadow-xs transition-all focus:outline-none focus:ring-2 focus:ring-[#F5B700] cursor-pointer"
+          >
+            <span>{t('viewAllReports')}</span>
+            <ArrowRight className="w-4 h-4 text-[#F5B700]" />
+          </Link>
+        </div>
       </div>
 
-      {/* 1. SUMMARY CARDS (ROW) */}
+      {/* 1. PRIMARY DEPARTMENT SELECTOR / DRILLDOWN BAR */}
+      <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-[#0B1F3A] text-[#F5B700]">
+              <Building2 className="w-4 h-4" />
+            </span>
+            <h2 className="text-xs sm:text-sm font-black text-[#0B1F3A]">
+              {t('departmentAnalyticsTitle')}
+            </h2>
+          </div>
+          <span className="text-[11px] font-semibold text-slate-500">
+            {lang === 'am' ? 'በመሥሪያ ቤት ለይቶ የመመርመሪያ ሰሌዳ' : 'Interactive Department Filter'}
+          </span>
+        </div>
+
+        {/* Scrollable / Wrap Department Filter Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => setSelectedDeptId('all')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-2 border ${
+              selectedDeptId === 'all'
+                ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-xs'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-[#F5B700]" />
+            <span>{t('allDepartmentsView')}</span>
+          </button>
+
+          {stats.departmentBreakdown?.map((dept) => {
+            const isSelected = selectedDeptId === dept.id;
+            return (
+              <button
+                key={dept.id}
+                type="button"
+                onClick={() => setSelectedDeptId(dept.id)}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-2 border ${
+                  isSelected
+                    ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-xs ring-2 ring-[#F5B700]'
+                    : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-[#0B1F3A] font-extrabold">
+                  {dept.code.toUpperCase()}
+                </span>
+                <span className="line-clamp-1">{lang === 'am' ? dept.nameAm : dept.nameEn}</span>
+                <span
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-extrabold ${
+                    isSelected
+                      ? 'bg-[#F5B700] text-[#0B1F3A]'
+                      : dept.totalCount > 0
+                      ? 'bg-blue-100 text-blue-900 font-mono'
+                      : 'bg-slate-100 text-slate-400'
+                  }`}
+                >
+                  {dept.totalCount}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ACTIVE DEPARTMENT PROFILE BANNER (IF A SPECIFIC DEPARTMENT IS SELECTED) */}
+      {selectedDeptDef && (
+        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#0B1F3A] via-[#122b4d] to-[#0B1F3A] text-white border-2 border-[#F5B700] shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-[#F5B700] text-[#0B1F3A]">
+                {selectedDeptDef.code.toUpperCase()}
+              </span>
+              <span className="text-xs font-bold text-[#F5B700]">
+                {t('activeDepartmentFilter')}
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-white">
+              {lang === 'am' ? selectedDeptDef.am : selectedDeptDef.en}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 font-medium">
+              {lang === 'am' ? selectedDeptDef.en : selectedDeptDef.am}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to={`/admin/reports?office=${encodeURIComponent(selectedDeptDef.en)}`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#F5B700] hover:bg-[#e0a700] text-[#0B1F3A] shadow-xs transition-colors cursor-pointer"
+            >
+              <FileText className="w-4 h-4" />
+              <span>{t('viewDepartmentReports')}</span>
+            </Link>
+
+            <Link
+              to="/admin/qr-code"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition-colors cursor-pointer"
+            >
+              <QrCode className="w-4 h-4 text-[#F5B700]" />
+              <span>{t('generateQrForDepartment')}</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setSelectedDeptId('all')}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/30 transition-colors cursor-pointer"
+            >
+              <span>✕ Clear</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 2. SUMMARY CARDS (ROW) */}
       <section aria-label="Status Summary Cards">
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
           {summaryCards.map((card) => {
             const Icon = card.icon;
-            const linkUrl = card.statusParam === 'all' ? '/admin/reports' : `/admin/reports?status=${card.statusParam}`;
+            const officeParam = selectedDeptDef ? `&office=${encodeURIComponent(selectedDeptDef.en)}` : '';
+            const linkUrl = card.statusParam === 'all' 
+              ? `/admin/reports?${officeParam.replace(/^&/, '')}` 
+              : `/admin/reports?status=${card.statusParam}${officeParam}`;
             return (
               <Link
                 key={card.statusKey}
@@ -290,80 +431,166 @@ export const DashboardPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. URGENT SECTION (PINNED LIST OF REPORTS MARKED URGENT) */}
-      {stats.urgentReports.length > 0 && (
-        <section
-          aria-label="Urgent Priority Reports"
-          className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-amber-300/80 bg-gradient-to-r from-amber-50/40 via-white to-amber-50/20 shadow-sm space-y-4"
-        >
-          <div className="flex items-center justify-between border-b border-amber-200/80 pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-[#F5B700] text-[#0B1F3A] shrink-0">
-                <Star className="w-5 h-5 fill-[#0B1F3A]" />
-              </div>
-              <div>
-                <h2 className="text-base sm:text-lg font-extrabold text-[#0B1F3A] flex items-center gap-2">
-                  <span>{t('urgentSectionTitle')}</span>
-                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#F5B700] text-[#0B1F3A]">
-                    {stats.urgentReports.length}
-                  </span>
-                </h2>
-                <p className="text-xs text-slate-600 font-medium">{t('urgentSectionSubtitle')}</p>
-              </div>
-            </div>
-            <span className="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
-              {t('urgentBadge')} Priority
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {stats.urgentReports.map((report) => (
-              <Link
-                key={report.id}
-                to={`/admin/reports/${report.id}`}
-                className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-[#0B1F3A] hover:shadow-md transition-all flex flex-col justify-between gap-3 group relative"
-              >
-                <div className="space-y-1.5">
+      {/* 3. PROMINENT DEPARTMENT HEATMAP & COMPARISON SECTION (KEY USER REQUIREMENT) */}
+      {selectedDeptId === 'all' && stats.departmentBreakdown && (
+        <section aria-label="Department Ranking and Heatmap" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Spotlighting #1 Most Reported Office */}
+            {stats.highestRiskDepartment && (
+              <div className="lg:col-span-5 bg-gradient-to-br from-rose-50 via-white to-amber-50/50 p-6 rounded-3xl border-2 border-rose-300 shadow-sm flex flex-col justify-between space-y-5">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-xs font-extrabold text-[#0B1F3A] group-hover:text-blue-700">
-                      {report.id}
+                    <span className="inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1 rounded-full bg-rose-600 text-white shadow-xs">
+                      <Flame className="w-3.5 h-3.5" />
+                      <span>#1 {t('mostReportedDepartment')}</span>
                     </span>
-                    <div className="flex items-center gap-1.5">
-                      <StatusBadge status={report.status} />
-                      {/* Interactive star toggle */}
-                      <button
-                        type="button"
-                        onClick={(e) => handleToggleUrgent(e, report.id)}
-                        className="p-1 rounded-md text-[#F5B700] hover:scale-110 transition-transform cursor-pointer"
-                        title={t('unmarkUrgent')}
-                        aria-label={t('unmarkUrgent')}
-                      >
-                        <Star className="w-4 h-4 fill-[#F5B700]" />
-                      </button>
-                    </div>
+                    <span className="text-xs font-mono font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md">
+                      {stats.highestRiskDepartment.percentage}% {t('departmentShare')}
+                    </span>
                   </div>
 
-                  <h3 className="text-xs font-bold text-slate-900 line-clamp-1">
-                    {getCorruptionTypeLabel(report.type)}
-                  </h3>
-                  <p className="text-xs text-slate-600 line-clamp-1 font-medium">
-                    {report.office}
-                  </p>
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-black text-[#0B1F3A] leading-snug">
+                      {lang === 'am'
+                        ? stats.highestRiskDepartment.nameAm
+                        : stats.highestRiskDepartment.nameEn}
+                    </h3>
+                    <p className="text-xs sm:text-sm font-semibold text-slate-600 mt-0.5">
+                      {lang === 'am'
+                        ? stats.highestRiskDepartment.nameEn
+                        : stats.highestRiskDepartment.nameAm}
+                    </p>
+                  </div>
+
+                  {stats.highestRiskDepartment.topCorruptionType && (
+                    <div className="p-3 rounded-2xl bg-white border border-rose-200/80 text-xs space-y-1">
+                      <span className="font-bold text-slate-500 block text-[11px] uppercase tracking-wider">
+                        {lang === 'am' ? 'ተደጋጋሚ የጥሰት ዓይነት' : 'Primary Violation Reported'}
+                      </span>
+                      <span className="font-extrabold text-[#0B1F3A] text-sm flex items-center gap-1.5">
+                        <AlertTriangle className="w-4 h-4 text-amber-500" />
+                        <span>{getCorruptionTypeLabel(stats.highestRiskDepartment.topCorruptionType)}</span>
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200">
+                      <span className="text-[11px] text-slate-500 font-bold block">{t('totalReports')}</span>
+                      <span className="text-lg font-black text-[#0B1F3A]">{stats.highestRiskDepartment.totalCount}</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200">
+                      <span className="text-[11px] text-amber-900 font-bold block">{t('newReports')}</span>
+                      <span className="text-lg font-black text-amber-900">{stats.highestRiskDepartment.newCount}</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                      <span className="text-[11px] text-emerald-900 font-bold block">{t('resolvedReports')}</span>
+                      <span className="text-lg font-black text-emerald-700">{stats.highestRiskDepartment.resolvedCount}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                  <span>{new Date(report.createdAt).toLocaleDateString()}</span>
-                  <span className="text-[#0B1F3A] font-bold group-hover:underline flex items-center gap-0.5">
-                    {t('viewDetail')} →
-                  </span>
+                <div className="pt-2 flex items-center gap-2">
+                  <Link
+                    to={`/admin/reports?office=${encodeURIComponent(stats.highestRiskDepartment.nameEn)}`}
+                    className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-[#0B1F3A] hover:bg-[#122b4d] text-white flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <span>{t('viewDepartmentReports')}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#F5B700]" />
+                  </Link>
                 </div>
-              </Link>
-            ))}
+              </div>
+            )}
+
+            {/* Department Comparison Horizontal Ranked Bars */}
+            <div className="lg:col-span-7 bg-white p-5 sm:p-6 rounded-3xl border border-[#E8EEF7] shadow-sm space-y-4 flex flex-col justify-between">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-[#F5B700]" />
+                  <h3 className="font-extrabold text-base text-[#0B1F3A]">
+                    {t('topOfficesChart')}
+                  </h3>
+                </div>
+                <span className="text-xs text-slate-500 font-semibold">
+                  {lang === 'am' ? 'በብዛት ቅደም-ተከተል' : 'Ranked by Volume'}
+                </span>
+              </div>
+
+              <div className="space-y-3.5">
+                {stats.departmentBreakdown.map((dept, idx) => {
+                  const maxCount = stats.departmentBreakdown[0]?.totalCount || 1;
+                  const barWidth = Math.max(10, Math.round((dept.totalCount / (maxCount || 1)) * 100));
+
+                  return (
+                    <div
+                      key={dept.id}
+                      onClick={() => setSelectedDeptId(dept.id)}
+                      className="space-y-1.5 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group"
+                      title={t('clickToFilter')}
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className={`w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 ${
+                              idx === 0
+                                ? 'bg-rose-600 text-white'
+                                : idx === 1
+                                ? 'bg-amber-500 text-white'
+                                : 'bg-[#0B1F3A] text-white'
+                            }`}
+                          >
+                            {idx + 1}
+                          </span>
+                          <span className="font-bold text-slate-800 group-hover:text-blue-900 truncate">
+                            {lang === 'am' ? dept.nameAm : dept.nameEn}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400 font-bold hidden sm:inline">
+                            [{dept.code.toUpperCase()}]
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          {dept.newCount > 0 && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                              {dept.newCount} New
+                            </span>
+                          )}
+                          <span className="font-extrabold text-[#0B1F3A]">
+                            {dept.totalCount} ({dept.percentage}%)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Colored Progress Bar */}
+                      <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                        <div
+                          className={`h-3 rounded-full transition-all duration-500 ${
+                            idx === 0
+                              ? 'bg-rose-600'
+                              : idx === 1
+                              ? 'bg-amber-500'
+                              : idx === 2
+                              ? 'bg-[#0B1F3A]'
+                              : 'bg-blue-600'
+                          }`}
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                <span>{lang === 'am' ? 'ለዝርዝር መሥሪያ ቤቱን ይጫኑ' : 'Click any bureau row to isolate its data'}</span>
+                <span className="text-blue-700 font-bold">{stats.departmentBreakdown.length} Bureaus Ranked</span>
+              </div>
+            </div>
           </div>
         </section>
       )}
 
-      {/* 3. CHARTS GRID */}
+      {/* 4. CHARTS GRID */}
       <section aria-label="Analytics and Charts Grid" className="space-y-6">
         {/* Row 1: Donut (Status) & Bar (Type) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -449,7 +676,7 @@ export const DashboardPage: React.FC = () => {
                     textAnchor="end"
                     interval={0}
                   />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
@@ -458,7 +685,7 @@ export const DashboardPage: React.FC = () => {
                           <div className="bg-[#0B1F3A] text-white p-3 rounded-xl shadow-lg border border-[#F5B700]/40 text-xs">
                             <p className="font-bold text-[#F5B700]">{item.fullName}</p>
                             <p className="mt-1 text-slate-200">
-                              {t('reportsCount')}: <span className="font-bold text-white">{item.count}</span>
+                              {item.count} {t('reportsCount')}
                             </p>
                           </div>
                         );
@@ -466,65 +693,76 @@ export const DashboardPage: React.FC = () => {
                       return null;
                     }}
                   />
-                  <Bar dataKey="count" fill="#0B1F3A" radius={[6, 6, 0, 0]} activeBar={{ fill: '#F5B700' }} />
+                  <Bar dataKey="count" fill="#0B1F3A" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         </div>
 
-        {/* Row 2: Reports Over Time (Line Chart with 7 / 30 / 90 Days selector) */}
+        {/* Row 2: Over Time Timeline */}
         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#E8EEF7] shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <h2 className="font-bold text-base text-[#0B1F3A] flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-[#F5B700]" />
-              <span>{t('reportsOverTimeChart')}</span>
-            </h2>
+            <div>
+              <h2 className="font-bold text-base text-[#0B1F3A] flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-[#F5B700]" />
+                <span>{t('reportsOverTimeChart')}</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">{t('timelineSubtitle')}</p>
+            </div>
 
-            {/* 7 / 30 / 90 Day Selector Buttons */}
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
-              {([7, 30, 90] as const).map((days) => (
-                <button
-                  key={days}
-                  type="button"
-                  onClick={() => setTimeRange(days)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    timeRange === days
-                      ? 'bg-[#0B1F3A] text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-                  }`}
-                >
-                  {days === 7 ? t('timeRange7') : days === 30 ? t('timeRange30') : t('timeRange90')}
-                </button>
-              ))}
+            <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-100 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setTimeRange(7)}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  timeRange === 7 ? 'bg-white text-[#0B1F3A] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {t('range7Days')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeRange(30)}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  timeRange === 30 ? 'bg-white text-[#0B1F3A] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {t('range30Days')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeRange(90)}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  timeRange === 90 ? 'bg-white text-[#0B1F3A] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {t('range90Days')}
+              </button>
             </div>
           </div>
 
           <div className="h-64 sm:h-72 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={timeData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+              <AreaChart data={timeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="timeRangeGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F5B700" stopOpacity={0.45} />
-                    <stop offset="95%" stopColor="#F5B700" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#0B1F3A" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#0B1F3A" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: '#64748b' }}
-                  interval={timeRange === 7 ? 0 : timeRange === 30 ? 4 : 12}
-                />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const item = payload[0].payload;
                       return (
-                        <div className="bg-[#0B1F3A] text-white p-3 rounded-xl shadow-lg border border-[#F5B700]/40 text-xs">
+                        <div className="bg-[#0B1F3A] text-white p-2.5 rounded-xl shadow-lg border border-[#F5B700]/40 text-xs">
                           <p className="font-bold text-[#F5B700]">{item.fullDate}</p>
                           <p className="mt-1 text-slate-200">
-                            {t('reportsCount')}: <span className="font-bold text-white">{item.count}</span>
+                            {item.count} {t('reportsCount')}
                           </p>
                         </div>
                       );
@@ -535,7 +773,7 @@ export const DashboardPage: React.FC = () => {
                 <Area
                   type="monotone"
                   dataKey="count"
-                  stroke="#F5B700"
+                  stroke="#0B1F3A"
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#timeRangeGrad)"
@@ -544,164 +782,19 @@ export const DashboardPage: React.FC = () => {
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Row 3: Top Reported Offices & Kebele Hotspots */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top Offices (Ranked Horizontal Bars) */}
-          <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#E8EEF7] shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="font-bold text-base text-[#0B1F3A] flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-[#F5B700]" />
-                <span>{t('topOfficesChart')}</span>
-              </h2>
-              <span className="text-xs text-slate-500 font-semibold">Top 5</span>
-            </div>
-
-            {stats.topOffices.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">{t('noReportsFound')}</div>
-            ) : (
-              <div className="space-y-3.5">
-                {stats.topOffices.map((office, idx) => (
-                  <div key={office.name} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-5 h-5 rounded-full bg-[#0B1F3A] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
-                          {idx + 1}
-                        </span>
-                        <span className="font-bold text-slate-800 truncate" title={office.name}>
-                          {office.name}
-                        </span>
-                      </div>
-                      <span className="font-bold text-[#0B1F3A] shrink-0 ml-2">
-                        {office.count} ({office.percentage}%)
-                      </span>
-                    </div>
-                    {/* Horizontal Progress Bar */}
-                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className="bg-[#0B1F3A] h-2.5 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.max(8, office.percentage)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Kebele Hotspots (Ranked List with Small Bars) */}
-          <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#E8EEF7] shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="font-bold text-base text-[#0B1F3A] flex items-center gap-2">
-                <Flame className="w-5 h-5 text-[#F5B700]" />
-                <span>{t('hotspotsByKebele')}</span>
-              </h2>
-              <span className="text-xs text-slate-500 font-semibold">Hotspots</span>
-            </div>
-
-            {stats.byKebele.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">{t('noReportsFound')}</div>
-            ) : (
-              <div className="space-y-3.5">
-                {stats.byKebele.map((item, idx) => (
-                  <div key={item.name} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <MapPin className="w-4 h-4 text-rose-600 shrink-0" />
-                        <span className="font-bold text-slate-800 truncate">{item.name}</span>
-                      </div>
-                      <span className="font-bold text-slate-900 shrink-0 ml-2">
-                        {item.count} {t('reportsCount')}
-                      </span>
-                    </div>
-                    {/* Small Bar */}
-                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-[#F5B700] h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.max(10, item.percentage)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
       </section>
 
-      {/* 4. "NEEDS ATTENTION" LIST (REPORTS STILL NEW/UNDER REVIEW > 7 DAYS) */}
-      <section aria-label="Reports Needing Attention" className="bg-white rounded-3xl border border-[#E8EEF7] shadow-sm p-5 sm:p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-rose-100 text-rose-700 shrink-0">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="font-extrabold text-base sm:text-lg text-[#0B1F3A] flex items-center gap-2">
-                <span>{t('needsAttentionTitle')}</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">
-                  {stats.needsAttentionReports.length}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-500 font-medium">{t('needsAttentionSubtitle')}</p>
-            </div>
-          </div>
-        </div>
-
-        {stats.needsAttentionReports.length === 0 ? (
-          <div className="p-6 text-center text-xs sm:text-sm text-slate-500 italic flex items-center justify-center gap-2">
-            <Check className="w-4 h-4 text-emerald-600" />
-            <span>{t('noAttentionReports')}</span>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {stats.needsAttentionReports.map((report) => (
-              <Link
-                key={report.id}
-                to={`/admin/reports/${report.id}`}
-                className="py-3.5 px-3 rounded-xl hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs font-extrabold text-[#0B1F3A] group-hover:text-blue-700">
-                      {report.id}
-                    </span>
-                    <span className="text-xs font-bold text-slate-700">
-                      • {getCorruptionTypeLabel(report.type)}
-                    </span>
-                    <StatusBadge status={report.status} />
-                  </div>
-                  <p className="text-xs text-slate-600 font-medium">
-                    {report.office} — {report.location}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                    <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-                    <span>{t('waitingDays', { days: report.daysWaiting })}</span>
-                  </span>
-                  <span className="text-xs font-bold text-[#0B1F3A] group-hover:underline">
-                    {t('viewDetail')} →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 5. RECENT REPORTS (LATEST 5 WITH STAR TOGGLE ON ROWS) */}
+      {/* 5. RECENT REPORTS LIST */}
       <section aria-label="Recent Reports" className="bg-white rounded-3xl border border-[#E8EEF7] shadow-sm p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <h2 className="font-bold text-base sm:text-lg text-[#0B1F3A] flex items-center gap-2">
             <span>{t('recentReportsTitle')}</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#E8EEF7] text-[#0B1F3A] font-bold">
-              5
+              {recentReports.length}
             </span>
           </h2>
           <Link
-            to="/admin/reports"
+            to={selectedDeptDef ? `/admin/reports?office=${encodeURIComponent(selectedDeptDef.en)}` : '/admin/reports'}
             className="text-xs sm:text-sm font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 cursor-pointer"
           >
             <span>{t('viewAllReports')}</span>
@@ -721,7 +814,6 @@ export const DashboardPage: React.FC = () => {
                 className="py-3 px-3 rounded-xl hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 group"
               >
                 <div className="flex items-start sm:items-center gap-3">
-                  {/* Star toggle button on row */}
                   <button
                     type="button"
                     onClick={(e) => handleToggleUrgent(e, report.id)}
@@ -738,7 +830,6 @@ export const DashboardPage: React.FC = () => {
                     />
                   </button>
 
-                  {/* Unread indicator */}
                   {!report.seen && (
                     <span
                       title="New / Unseen"

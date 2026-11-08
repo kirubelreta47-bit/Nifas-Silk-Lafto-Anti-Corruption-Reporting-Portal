@@ -7,6 +7,7 @@ import {
   DecisionLog,
 } from '../types';
 import { apiClient } from './apiClient';
+import { COMMON_DEPARTMENTS, matchReportToDepartment } from '../constants/departments';
 
 const STORAGE_KEY = 'nsl_corruption_reports';
 const RATE_LIMIT_KEY = 'nsl_last_submission_time';
@@ -791,8 +792,14 @@ export const reportService = {
     return updatedReport;
   },
 
-  getReportStats: (daysRange: 7 | 30 | 90 = 30) => {
-    const reports = initializeReportsStorage();
+  getReportStats: (daysRange: 7 | 30 | 90 = 30, officeFilter?: string) => {
+    const allReports = initializeReportsStorage();
+    let reports = allReports;
+    if (officeFilter && officeFilter !== 'all') {
+      const q = officeFilter.toLowerCase();
+      reports = reports.filter((r) => r.office.toLowerCase().includes(q));
+    }
+
     const now = Date.now();
     const sevenDaysAgo = now - 7 * 86400000;
 
@@ -882,6 +889,54 @@ export const reportService = {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
+    // Comprehensive Department Breakdown & Ranking for Visual Representation
+    const departmentBreakdown = COMMON_DEPARTMENTS.map((dept) => {
+      const matchingReports = allReports.filter((r) => {
+        const m = matchReportToDepartment(r.office);
+        return (
+          m?.id === dept.id ||
+          r.office.toLowerCase().includes(dept.en.toLowerCase()) ||
+          r.office.includes(dept.am)
+        );
+      });
+
+      const totalCount = matchingReports.length;
+      const newCount = matchingReports.filter((r) => r.status === 'new').length;
+      const investigatingCount = matchingReports.filter(
+        (r) => r.status === 'investigating' || r.status === 'under_review'
+      ).length;
+      const resolvedCount = matchingReports.filter((r) => r.status === 'resolved').length;
+      const urgentCount = matchingReports.filter((r) => r.urgent).length;
+      const percentage = Math.round((totalCount / (allReports.length || 1)) * 100);
+
+      const tCounts: Record<string, number> = {};
+      matchingReports.forEach((r) => {
+        tCounts[r.type] = (tCounts[r.type] || 0) + 1;
+      });
+      const topTypeEntry = Object.entries(tCounts).sort((a, b) => b[1] - a[1])[0];
+      const topCorruptionType = topTypeEntry ? (topTypeEntry[0] as CorruptionType) : undefined;
+
+      const riskLevel: 'high' | 'medium' | 'low' =
+        totalCount >= 3 ? 'high' : totalCount >= 1 ? 'medium' : 'low';
+
+      return {
+        id: dept.id,
+        code: dept.code,
+        nameAm: dept.am,
+        nameEn: dept.en,
+        totalCount,
+        newCount,
+        investigatingCount,
+        resolvedCount,
+        urgentCount,
+        percentage,
+        topCorruptionType,
+        riskLevel,
+      };
+    }).sort((a, b) => b.totalCount - a.totalCount);
+
+    const highestRiskDepartment = departmentBreakdown[0];
+
     // Hotspots by Kebele / Woreda
     const kebeleCounts: Record<string, number> = {};
     reports.forEach((r) => {
@@ -937,6 +992,8 @@ export const reportService = {
       byType,
       overTime,
       topOffices,
+      departmentBreakdown,
+      highestRiskDepartment,
       byKebele,
       urgentReports,
       needsAttentionReports,

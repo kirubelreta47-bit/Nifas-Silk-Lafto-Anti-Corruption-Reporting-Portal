@@ -253,7 +253,20 @@ export const translations = {
     filterByOffice: 'በመሥሪያ ቤት አጣራ',
     allOfficesFilter: 'ሁሉም መሥሪያ ቤቶች (All Offices)',
     batchQrTitle: 'የሁሉም መሥሪያ ቤቶች የQR ኮድ ሰሌዳ',
-    batchQrSubtitle: 'ለእያንዳንዱ መሥሪያ ቤት የተዘጋጁትን QR ኮዶች ለየብቻ ያውርዱ ወይም ሊንኩን ይቅዱ'
+    batchQrSubtitle: 'ለእያንዳንዱ መሥሪያ ቤት የተዘጋጁትን QR ኮዶች ለየብቻ ያውርዱ ወይም ሊንኩን ይቅዱ',
+    departmentAnalyticsTitle: 'የመሥሪያ ቤቶች የሙስና ስጋት ትንተና',
+    departmentAnalyticsSubtitle: 'እያንዳንዱ መሥሪያ ቤት የቀረበበትን የጥቆማ ብዛትና የሙስና ዓይነት ለይተው ይመልከቱ',
+    mostReportedDepartment: 'ከፍተኛ ጥቆማ የተመዘገበበት መሥሪያ ቤት',
+    viewDepartmentReports: 'የዚህን መሥሪያ ቤት ጥቆማዎች ብቻ ተመልከት',
+    generateQrForDepartment: 'የዚህን መሥሪያ ቤት QR ኮድ አውጣ',
+    departmentShare: 'የክፍለ ከተማው ድርሻ',
+    highRisk: 'ከፍተኛ ስጋት',
+    moderateRisk: 'መካከለኛ ስጋት',
+    lowRisk: 'ዝቅተኛ ስጋት',
+    groupByDepartment: 'በመሥሪያ ቤት ተከፋፍሎ',
+    tableView: 'የሰንጠረዥ እይታ',
+    activeDepartmentFilter: 'የተመረጠው መሥሪያ ቤት',
+    allDepartmentsView: 'ሁሉም መሥሪያ ቤቶች (Sub-City Overview)'
   },
   en: {
     // Brand & Header
@@ -507,7 +520,20 @@ export const translations = {
     filterByOffice: 'Filter by Department',
     allOfficesFilter: 'All Departments (ሁሉም መሥሪያ ቤቶች)',
     batchQrTitle: 'All Department QR Code Cards',
-    batchQrSubtitle: 'Quickly copy or download desk-specific QR codes for each service bureau'
+    batchQrSubtitle: 'Quickly copy or download desk-specific QR codes for each service bureau',
+    departmentAnalyticsTitle: 'Department Corruption Analytics & Heatmap',
+    departmentAnalyticsSubtitle: 'Direct breakdown and visual ranking of reports submitted across each bureau desk',
+    mostReportedDepartment: 'Department With Most Reports',
+    viewDepartmentReports: 'View Department Reports',
+    generateQrForDepartment: 'Generate QR for Desk',
+    departmentShare: 'Share of Total Reports',
+    highRisk: 'High Volume',
+    moderateRisk: 'Moderate Volume',
+    lowRisk: 'Low Volume',
+    groupByDepartment: 'Grouped by Department',
+    tableView: 'Table View',
+    activeDepartmentFilter: 'Filtered by Department',
+    allDepartmentsView: 'All Departments (Sub-City Overview)'
   }
 } as const;
 

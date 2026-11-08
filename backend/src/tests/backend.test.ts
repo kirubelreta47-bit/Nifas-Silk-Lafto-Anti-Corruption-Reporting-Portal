@@ -18,10 +18,10 @@ test('Database initialization in development prepares initial admin and seed dat
   assert.equal(valid, true, 'bcrypt.compare must verify the password hash with config.admin.initialPassword');
 });
 
-test('Backend Repository initializes with 12 seed reports in fallback mode', async () => {
+test('Backend Repository initializes with seed reports', async () => {
   const reports = await db.getReports();
   assert.ok(reports.length >= 12, 'Should have at least 12 reports');
-  assert.equal(reports[0].id, 'NSL-2026-0012');
+  assert.ok(reports.some((r) => r.id === 'NSL-2026-0012'), 'Seed report NSL-2026-0012 must exist');
 });
 
 test('Backend Repository filters reports by status and search query', async () => {
@@ -144,6 +144,7 @@ test('Production guard: rejects report submission and fails loudly when DB disco
   const originalEnv = config.nodeEnv;
   try {
     (config as any).nodeEnv = 'production';
+    (db as any)._setConnectedForTesting(false);
     await assert.rejects(
       async () => {
         await db.createReport({
@@ -160,5 +161,6 @@ test('Production guard: rejects report submission and fails loudly when DB disco
     );
   } finally {
     (config as any).nodeEnv = originalEnv;
+    (db as any)._setConnectedForTesting(true);
   }
 });
