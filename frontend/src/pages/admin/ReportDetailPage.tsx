@@ -5,6 +5,7 @@ import { authService } from '../../services/authService';
 import { resolveFileUrl } from '../../services/apiClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
+import { formatEthiopianDate, formatEthiopianDateTime } from '../../utils/ethiopianCalendar';
 import { Report, ReportStatus, CorruptionType } from '../../types';
 import {
   ArrowLeft,
@@ -186,8 +187,11 @@ export const ReportDetailPage: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-2 flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5" />
-            <span>የቀረበበት ቀንና ሰዓት: {new Date(report.createdAt).toLocaleString()}</span>
+            <Clock className="w-3.5 h-3.5 text-blue-800" />
+            <span>
+              {lang === 'am' ? 'የቀረበበት ቀንና ሰዓት: ' : 'Submitted: '}
+              <strong className="text-slate-800 font-bold">{formatEthiopianDateTime(report.createdAt, lang)}</strong>
+            </span>
           </p>
         </div>
 
@@ -242,10 +246,12 @@ export const ReportDetailPage: React.FC = () => {
               {/* Date of incident */}
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
                 <span className="text-[11px] font-bold text-slate-400 uppercase flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5" />
+                  <Calendar className="w-3.5 h-3.5 text-blue-800" />
                   {t('incidentDateLabel')}
                 </span>
-                <p className="font-bold text-slate-800">{report.incidentDate}</p>
+                <p className="font-bold text-slate-900">
+                  {formatEthiopianDate(report.incidentDate, lang, { showGregorian: true })}
+                </p>
               </div>
 
               {/* Person involved */}
@@ -515,8 +521,8 @@ export const ReportDetailPage: React.FC = () => {
                       "{entry.note}"
                     </p>
                   )}
-                  <p className="text-[11px] text-slate-400">
-                    {entry.adminEmail} • {new Date(entry.timestamp).toLocaleString()}
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {entry.adminEmail} • {formatEthiopianDateTime(entry.timestamp, lang)}
                   </p>
                 </div>
               ))}

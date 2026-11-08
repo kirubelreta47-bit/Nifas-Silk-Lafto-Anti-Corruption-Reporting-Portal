@@ -5,6 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, CorruptionType, ReportStatus } from '../../types';
 import { COMMON_DEPARTMENTS, matchReportToDepartment } from '../../constants/departments';
+import { formatEthiopianDate } from '../../utils/ethiopianCalendar';
 import {
   Search,
   Filter,
@@ -262,95 +263,7 @@ export const ReportsListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 1. CLEAN VISUAL DISTRIBUTION BAR (SIMPLIFIED & HARMONIOUS FOR THE EYE) */}
-      {allReports.length > 0 && (
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-            <span className="flex items-center gap-1.5">
-              <Building2 className="w-4 h-4 text-[#F5B700]" />
-              <span>{t('departmentShare')}</span>
-            </span>
-            <span className="text-slate-500 font-mono text-[11px]">
-              {allReports.length} {t('reportsCount')}
-            </span>
-          </div>
-
-          {/* Segmented Distribution Bar - Unified, Cohesive Navy & Slate Tones */}
-          <div className="w-full h-3.5 rounded-full overflow-hidden flex bg-slate-100 divide-x divide-white">
-            {COMMON_DEPARTMENTS.map((dept, index) => {
-              const count = departmentCounts[dept.id] || 0;
-              if (count === 0) return null;
-              const pct = Math.round((count / allReports.length) * 100);
-              const isSelected =
-                officeFilter !== 'all' && officeFilter.toLowerCase().includes(dept.en.toLowerCase());
-
-              // Eye-friendly harmonious navy tones from dark to mid-tone
-              const navyTones = [
-                'bg-[#0B1F3A]',
-                'bg-[#173359]',
-                'bg-[#23487a]',
-                'bg-[#305e9c]',
-                'bg-[#4076be]',
-                'bg-[#588ecf]',
-                'bg-[#79a7de]',
-                'bg-[#9ec0ed]',
-              ];
-              const defaultColor = navyTones[index % navyTones.length];
-              const segmentClass = isSelected
-                ? 'bg-[#F5B700] ring-2 ring-[#0B1F3A] z-10'
-                : officeFilter !== 'all'
-                ? 'bg-slate-300 opacity-60 hover:opacity-100'
-                : `${defaultColor} hover:brightness-110`;
-
-              return (
-                <div
-                  key={dept.id}
-                  onClick={() => handleSelectDepartmentTab(dept.en)}
-                  className={`${segmentClass} transition-all cursor-pointer relative`}
-                  style={{ width: `${Math.max(6, pct)}%` }}
-                  title={`${dept.en}: ${count} reports (${pct}%)`}
-                />
-              );
-            })}
-          </div>
-
-          {/* Minimalist Key Stats below the bar */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 pt-0.5">
-            {COMMON_DEPARTMENTS.filter((d) => (departmentCounts[d.id] || 0) > 0)
-              .slice(0, 5)
-              .map((dept) => {
-                const count = departmentCounts[dept.id] || 0;
-                const pct = Math.round((count / allReports.length) * 100);
-                const isSelected =
-                  officeFilter !== 'all' && officeFilter.toLowerCase().includes(dept.en.toLowerCase());
-                return (
-                  <button
-                    key={dept.id}
-                    type="button"
-                    onClick={() => handleSelectDepartmentTab(dept.en)}
-                    className={`inline-flex items-center gap-1.5 transition-colors cursor-pointer text-[11px] ${
-                      isSelected
-                        ? 'font-bold text-[#0B1F3A] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200'
-                        : 'hover:text-[#0B1F3A]'
-                    }`}
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full shrink-0 ${
-                        isSelected ? 'bg-[#F5B700]' : 'bg-[#0B1F3A]'
-                      }`}
-                    />
-                    <span className="font-medium">{lang === 'am' ? dept.am : dept.en}:</span>
-                    <span className="font-mono font-bold text-[#0B1F3A]">
-                      {count} ({pct}%)
-                    </span>
-                  </button>
-                );
-              })}
-          </div>
-        </div>
-      )}
-
-      {/* 2. DEPARTMENT SELECTION DROPDOWN (NO SLIDING NEEDED) */}
+      {/* DEPARTMENT SELECTION DROPDOWN (NO SLIDING NEEDED) */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-[#0B1F3A] text-[#F5B700] shrink-0">
@@ -651,8 +564,8 @@ export const ReportsListPage: React.FC = () => {
                           <p className="text-xs text-slate-600 line-clamp-1">
                             {report.description}
                           </p>
-                          <p className="text-[11px] text-slate-400">
-                            {report.location} • {new Date(report.createdAt).toLocaleDateString()}
+                          <p className="text-[11px] text-slate-500 font-medium">
+                            {report.location} • {formatEthiopianDate(report.incidentDate || report.createdAt, lang)}
                           </p>
                         </div>
 
@@ -753,8 +666,13 @@ export const ReportsListPage: React.FC = () => {
                           </div>
                         </td>
 
-                        <td className="py-4 px-4 whitespace-nowrap text-xs text-slate-600">
-                          {new Date(report.createdAt).toLocaleDateString()}
+                        <td className="py-4 px-4 whitespace-nowrap text-xs text-slate-700">
+                          <span className="font-bold text-[#0B1F3A] block">
+                            {formatEthiopianDate(report.incidentDate || report.createdAt, lang)}
+                          </span>
+                          <span className="text-[11px] text-slate-400 font-mono block">
+                            {report.incidentDate || new Date(report.createdAt).toISOString().split('T')[0]}
+                          </span>
                         </td>
 
                         <td className="py-4 px-4 whitespace-nowrap">
@@ -823,8 +741,8 @@ export const ReportsListPage: React.FC = () => {
                         <Building2 className="w-3.5 h-3.5 text-[#0B1F3A]" />
                         <span>{report.office}</span>
                       </p>
-                      <p className="text-[11px] text-slate-500">
-                        {report.location} • {new Date(report.createdAt).toLocaleDateString()}
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        {report.location} • {formatEthiopianDate(report.incidentDate || report.createdAt, lang)}
                       </p>
                     </div>
 
