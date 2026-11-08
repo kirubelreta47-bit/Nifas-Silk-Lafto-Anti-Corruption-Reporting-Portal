@@ -38,7 +38,10 @@ export const QrCodePage: React.FC = () => {
   const vercelProdUrl = import.meta.env.VITE_APP_URL || 'https://nsl-portal.vercel.app';
 
   // Local network Wi-Fi address for testing on physical mobile phones
-  const localWifiUrl = 'http://192.168.8.2:3000/';
+  const localWifiUrl =
+    typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+      ? `${window.location.origin}/`
+      : 'http://10.190.121.3:3000/';
 
   // Base URL state
   const [baseUrl, setBaseUrl] = useState<string>(() => {
