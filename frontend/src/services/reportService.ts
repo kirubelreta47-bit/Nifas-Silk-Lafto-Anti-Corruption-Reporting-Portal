@@ -501,6 +501,11 @@ export const reportService = {
       reports = reports.filter((r) => r.type === filters.type);
     }
 
+    if (filters.office && filters.office !== 'all') {
+      const q = filters.office.toLowerCase();
+      reports = reports.filter((r) => r.office.toLowerCase().includes(q));
+    }
+
     if (filters.anonymousOnly) {
       reports = reports.filter((r) => r.isAnonymous);
     }

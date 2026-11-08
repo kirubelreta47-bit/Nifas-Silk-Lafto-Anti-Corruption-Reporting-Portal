@@ -4,6 +4,7 @@ import { reportService } from '../../services/reportService';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, CorruptionType, ReportStatus } from '../../types';
+import { COMMON_DEPARTMENTS } from '../../constants/departments';
 import {
   Search,
   Filter,
@@ -28,6 +29,7 @@ export const ReportsListPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>(() => searchParams.get('status') || 'all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [officeFilter, setOfficeFilter] = useState<string>('all');
   const [anonymousOnly, setAnonymousOnly] = useState(false);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -61,7 +63,7 @@ export const ReportsListPage: React.FC = () => {
 
   // Fetch reports from service
   const filteredReports = useMemo(() => {
-    return reportService.getReports({
+    let reports = reportService.getReports({
       search: search.trim() || undefined,
       status: statusFilter !== 'all' ? statusFilter : undefined,
       type: typeFilter !== 'all' ? typeFilter : undefined,
@@ -69,7 +71,14 @@ export const ReportsListPage: React.FC = () => {
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
     });
-  }, [search, statusFilter, typeFilter, anonymousOnly, dateFrom, dateTo, syncTrigger]);
+
+    if (officeFilter !== 'all') {
+      const q = officeFilter.toLowerCase();
+      reports = reports.filter((r) => r.office.toLowerCase().includes(q));
+    }
+
+    return reports;
+  }, [search, statusFilter, typeFilter, officeFilter, anonymousOnly, dateFrom, dateTo, syncTrigger]);
 
   // Pagination calculation
   const totalReports = filteredReports.length;
@@ -83,6 +92,7 @@ export const ReportsListPage: React.FC = () => {
     setSearch('');
     setStatusFilter('all');
     setTypeFilter('all');
+    setOfficeFilter('all');
     setAnonymousOnly(false);
     setDateFrom('');
     setDateTo('');
@@ -93,6 +103,7 @@ export const ReportsListPage: React.FC = () => {
     search.trim() !== '' ||
     statusFilter !== 'all' ||
     typeFilter !== 'all' ||
+    officeFilter !== 'all' ||
     anonymousOnly ||
     dateFrom !== '' ||
     dateTo !== '';
@@ -184,7 +195,7 @@ export const ReportsListPage: React.FC = () => {
         </div>
 
         {/* Dropdown Filters Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t border-slate-100">
           {/* Status filter */}
           <div className="space-y-1">
             <label className="block text-xs font-bold text-slate-600">
@@ -228,6 +239,28 @@ export const ReportsListPage: React.FC = () => {
               <option value="embezzlement">{t('embezzlement')}</option>
               <option value="favoritism">{t('favoritism')}</option>
               <option value="other">{t('other')}</option>
+            </select>
+          </div>
+
+          {/* Department / Office filter */}
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-slate-600">
+              {t('filterByOffice')}
+            </label>
+            <select
+              value={officeFilter}
+              onChange={(e) => {
+                setOfficeFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F5B700]"
+            >
+              <option value="all">{t('allOfficesFilter')}</option>
+              {COMMON_DEPARTMENTS.map((dept) => (
+                <option key={dept.id} value={dept.en}>
+                  {lang === 'am' ? dept.am : dept.en}
+                </option>
+              ))}
             </select>
           </div>
 

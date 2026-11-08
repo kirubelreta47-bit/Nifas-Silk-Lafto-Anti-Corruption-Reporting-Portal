@@ -38,6 +38,12 @@ test('Backend Repository filters reports by status and search query', async () =
       r.office.includes('ላፍቶ');
     assert.ok(match);
   });
+
+  const landReports = await db.getReports({ office: 'Land' });
+  assert.ok(landReports.length > 0);
+  landReports.forEach((r) => {
+    assert.ok(r.office.toLowerCase().includes('land'));
+  });
 });
 
 test('Backend Repository creates a report and computes stats', async () => {

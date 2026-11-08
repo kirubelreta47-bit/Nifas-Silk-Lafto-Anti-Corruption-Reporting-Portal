@@ -290,6 +290,10 @@ export const db = {
         query += ` AND r.type = $${pIndex++}`;
         params.push(options.type);
       }
+      if (options.office && options.office !== 'all') {
+        query += ` AND r.office ILIKE $${pIndex++}`;
+        params.push(`%${options.office}%`);
+      }
       if (options.anonymousOnly) {
         query += ` AND r.is_anonymous = true`;
       }
@@ -359,6 +363,7 @@ export const db = {
     return inMemoryReports.filter((r) => {
       if (options.status && options.status !== 'all' && r.status !== options.status) return false;
       if (options.type && options.type !== 'all' && r.type !== options.type) return false;
+      if (options.office && options.office !== 'all' && !r.office.toLowerCase().includes(options.office.toLowerCase())) return false;
       if (options.anonymousOnly && !r.isAnonymous) return false;
       if (options.dateFrom && r.incidentDate < options.dateFrom) return false;
       if (options.dateTo && r.incidentDate > options.dateTo) return false;

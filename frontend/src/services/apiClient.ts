@@ -51,6 +51,7 @@ export const apiClient = {
     const params = new URLSearchParams();
     if (filters.status && filters.status !== 'all') params.append('status', filters.status);
     if (filters.type && filters.type !== 'all') params.append('type', filters.type);
+    if (filters.office && filters.office !== 'all') params.append('office', filters.office);
     if (filters.search) params.append('search', filters.search);
     if (filters.anonymousOnly) params.append('anonymousOnly', 'true');
     if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);

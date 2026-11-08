@@ -241,7 +241,19 @@ export const translations = {
     posterInstructionsEth: 'በስልክዎ ካሜራ የQR ኮዱን በመቃኘት ሚስጥራዊ ጥቆማዎን በቀጥታ ለፀረ-ሙስና ክፍል ያድርሱ።',
     posterInstructionsEng: 'Scan with your smartphone camera to submit a secure and confidential report directly to the Anti-Corruption Directorate.',
     confidentialGuaranteed: 'ማንነትዎ ሙሉ በሙሉ የተጠበቀ ነው | 100% Confidential & Secure',
-    hotlineNotice: 'የነፃ ጥሪ መስመር (Hotline): 969 / 011-442-0123'
+    hotlineNotice: 'የነፃ ጥሪ መስመር (Hotline): 969 / 011-442-0123',
+    selectDeptLabel: 'የሚለጠፍበት መሥሪያ ቤት / ዴስክ ይምረጡ',
+    allDeptsOption: 'አጠቃላይ ጥቆማ (ሁሉም መሥሪያ ቤቶች)',
+    customDeptOption: 'ልዩ ቢሮ / የወረዳ ዴስክ (Custom)',
+    customDeptPlaceholder: 'የመሥሪያ ቤቱን / የወረዳ ዴስኩን ስም ያስገቡ...',
+    qrDepartmentBadge: 'የመሥሪያ ቤት የተለየ መጠቆሚያ QR',
+    lockedDeptBannerTitle: 'ጥቆማ የሚቀርብለት መሥሪያ ቤት',
+    lockedDeptBadge: 'በQR ኮድ የተረጋገጠ',
+    lockedDeptDesc: 'ይህ ጥቆማ በቀጥታ ለዚህ መሥሪያ ቤት እና ለፀረ-ሙስና ክትትል ክፍል ይመዘገባል።',
+    filterByOffice: 'በመሥሪያ ቤት አጣራ',
+    allOfficesFilter: 'ሁሉም መሥሪያ ቤቶች (All Offices)',
+    batchQrTitle: 'የሁሉም መሥሪያ ቤቶች የQR ኮድ ሰሌዳ',
+    batchQrSubtitle: 'ለእያንዳንዱ መሥሪያ ቤት የተዘጋጁትን QR ኮዶች ለየብቻ ያውርዱ ወይም ሊንኩን ይቅዱ'
   },
   en: {
     // Brand & Header
@@ -483,7 +495,19 @@ export const translations = {
     posterInstructionsEth: 'በስልክዎ ካሜራ የQR ኮዱን በመቃኘት ሚስጥራዊ ጥቆማዎን በቀጥታ ለፀረ-ሙስና ክፍል ያድርሱ።',
     posterInstructionsEng: 'Scan with your smartphone camera to submit a secure and confidential report directly to the Anti-Corruption Directorate.',
     confidentialGuaranteed: 'ማንነትዎ ሙሉ በሙሉ የተጠበቀ ነው | 100% Confidential & Secure',
-    hotlineNotice: 'Hotline: 969 / 011-442-0123'
+    hotlineNotice: 'Hotline: 969 / 011-442-0123',
+    selectDeptLabel: 'Select Target Department / Service Desk',
+    allDeptsOption: 'General Portal (All Departments)',
+    customDeptOption: 'Custom Office / Specific Woreda Desk',
+    customDeptPlaceholder: 'Enter department or woreda desk name...',
+    qrDepartmentBadge: 'Official Department Desk QR',
+    lockedDeptBannerTitle: 'Target Department',
+    lockedDeptBadge: 'QR Code Pre-Assigned',
+    lockedDeptDesc: 'This report is directly submitted under this specific department desk.',
+    filterByOffice: 'Filter by Department',
+    allOfficesFilter: 'All Departments (ሁሉም መሥሪያ ቤቶች)',
+    batchQrTitle: 'All Department QR Code Cards',
+    batchQrSubtitle: 'Quickly copy or download desk-specific QR codes for each service bureau'
   }
 } as const;
 

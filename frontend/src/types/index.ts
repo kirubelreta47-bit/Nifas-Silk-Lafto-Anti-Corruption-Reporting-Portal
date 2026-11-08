@@ -69,6 +69,7 @@ export interface CreateReportInput {
 export interface FilterOptions {
   status?: string;
   type?: string;
+  office?: string;
   search?: string;
   anonymousOnly?: boolean;
   dateFrom?: string;

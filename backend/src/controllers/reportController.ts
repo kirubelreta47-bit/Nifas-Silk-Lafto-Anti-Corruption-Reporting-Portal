@@ -9,6 +9,7 @@ export const reportController = {
       const options: FilterOptions = {
         status: req.query.status as string,
         type: req.query.type as string,
+        office: req.query.office as string,
         search: req.query.search as string,
         anonymousOnly: req.query.anonymousOnly === 'true',
         dateFrom: req.query.dateFrom as string,
