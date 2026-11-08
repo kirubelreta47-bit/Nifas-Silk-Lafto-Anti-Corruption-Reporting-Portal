@@ -1,7 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { useLanguage } from '../../context/LanguageContext';
-import { OfficialEmblem } from '../../components/OfficialEmblem';
 import { COMMON_DEPARTMENTS, DepartmentDef } from '../../constants/departments';
 import {
   QrCode,
@@ -95,11 +94,11 @@ export const QrCodePage: React.FC = () => {
     URL.revokeObjectURL(blobUrl);
   };
 
-  // 3. Download Full Official Printable Poster (1200x1600 Canvas PNG)
+  // 3. Download Clean Official Poster (Canvas PNG without bottom guarantees container)
   const handleDownloadPosterPng = () => {
     const canvas = document.createElement('canvas');
     const width = 1200;
-    const height = 1600;
+    const height = 1260;
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
@@ -177,31 +176,11 @@ export const QrCodePage: React.FC = () => {
     // Portal Destination URL
     ctx.fillStyle = '#0B1F3A';
     ctx.font = 'bold 24px monospace';
-    ctx.fillText(computedQrUrl, width / 2, 1165);
+    ctx.fillText(computedQrUrl, width / 2, 1175);
 
-    // Guarantees box
-    ctx.fillStyle = '#0B1F3A';
-    ctx.fillRect(80, 1210, width - 160, 260);
-
+    // Bottom Decorative Gold Bar
     ctx.fillStyle = '#F5B700';
-    ctx.font = 'bold 28px "Noto Sans Ethiopic", "Inter", sans-serif';
-    ctx.fillText('★ 100% ሚስጥራዊ እና ስም-አልባ (Strictly Confidential & Anonymous) ★', width / 2, 1275);
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '500 23px "Noto Sans Ethiopic", "Inter", sans-serif';
-    ctx.fillText('የአይፒ (IP) አድራሻ ወይም የመሣሪያ መረጃ በጭራሽ አይመዘገብም', width / 2, 1330);
-
-    ctx.fillStyle = '#E8EEF7';
-    ctx.font = '500 21px "Noto Sans Ethiopic", "Inter", sans-serif';
-    ctx.fillText('ጥቆማዎ በቀጥታ ለዚህ መሥሪያ ቤትና ለክፍለ ከተማው የፀረ-ሙስና ጽ/ቤት ይመዘገባል', width / 2, 1380);
-
-    ctx.fillStyle = '#F5B700';
-    ctx.font = 'bold 24px "Noto Sans Ethiopic", "Inter", sans-serif';
-    ctx.fillText('የነፃ ጥሪ መስመር (Hotline): 969 / +251 11 442 0123', width / 2, 1430);
-
-    // Bottom Decorative Bar
-    ctx.fillStyle = '#F5B700';
-    ctx.fillRect(0, height - 20, width, 20);
+    ctx.fillRect(0, height - 16, width, 16);
 
     // Export as PNG
     const pngUrl = canvas.toDataURL('image/png');
