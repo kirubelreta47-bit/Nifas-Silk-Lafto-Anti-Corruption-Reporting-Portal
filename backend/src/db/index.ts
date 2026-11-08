@@ -745,4 +745,10 @@ export const db = {
       timeline,
     };
   },
+
+  close: async () => {
+    if (pool) {
+      await pool.end();
+    }
+  },
 };

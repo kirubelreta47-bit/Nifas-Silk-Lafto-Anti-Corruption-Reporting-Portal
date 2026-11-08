@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -163,4 +163,8 @@ test('Production guard: rejects report submission and fails loudly when DB disco
     (config as any).nodeEnv = originalEnv;
     (db as any)._setConnectedForTesting(true);
   }
+});
+
+after(async () => {
+  await db.close();
 });

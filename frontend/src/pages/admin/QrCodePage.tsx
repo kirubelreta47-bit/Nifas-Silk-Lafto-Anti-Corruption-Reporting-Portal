@@ -63,14 +63,6 @@ export const QrCodePage: React.FC = () => {
 
   // Active department resolution
   const activeDept = useMemo(() => {
-    if (selectedDeptId === 'all') {
-      return {
-        id: 'all',
-        code: 'ALL',
-        am: 'አጠቃላይ መጠቆሚያ (ሁሉም መሥሪያ ቤቶች)',
-        en: 'General Portal (All Departments)',
-      };
-    }
     if (selectedDeptId === 'custom') {
       const name = customDeptName.trim() || 'Custom Office';
       return {
@@ -86,9 +78,6 @@ export const QrCodePage: React.FC = () => {
   // Compute final QR target destination URL with department parameter
   const computedQrUrl = useMemo(() => {
     const cleanBase = baseUrl.trim().replace(/\/+$/, '');
-    if (selectedDeptId === 'all') {
-      return `${cleanBase}/`;
-    }
     if (selectedDeptId === 'custom') {
       return `${cleanBase}/?dept=${encodeURIComponent(customDeptName.trim() || 'Custom Office')}`;
     }
@@ -384,48 +373,6 @@ export const QrCodePage: React.FC = () => {
               </button>
             );
           })}
-
-          {/* General Option */}
-          <button
-            type="button"
-            onClick={() => setSelectedDeptId('all')}
-            className={`p-3 rounded-2xl text-left border transition-all flex flex-col justify-between cursor-pointer ${
-              selectedDeptId === 'all'
-                ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-md ring-2 ring-[#F5B700]'
-                : 'bg-slate-50 hover:bg-white text-slate-800 border-slate-200 hover:border-blue-300 hover:shadow-xs'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <span
-                className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                  selectedDeptId === 'all'
-                    ? 'bg-[#F5B700] text-[#0B1F3A]'
-                    : 'bg-slate-200 text-slate-700'
-                }`}
-              >
-                ALL
-              </span>
-              {selectedDeptId === 'all' && (
-                <Check className="w-4 h-4 text-[#F5B700] shrink-0" />
-              )}
-            </div>
-            <div className="mt-2">
-              <p
-                className={`text-xs font-bold leading-snug ${
-                  selectedDeptId === 'all' ? 'text-white' : 'text-[#0B1F3A]'
-                }`}
-              >
-                {t('allDeptsOption')}
-              </p>
-              <p
-                className={`text-[11px] font-medium mt-0.5 ${
-                  selectedDeptId === 'all' ? 'text-slate-300' : 'text-slate-500'
-                }`}
-              >
-                General Portal URL
-              </p>
-            </div>
-          </button>
 
           {/* Custom Department Option */}
           <button

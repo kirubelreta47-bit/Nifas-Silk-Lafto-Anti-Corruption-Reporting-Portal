@@ -49,8 +49,8 @@ export const PublicReportPage: React.FC = () => {
 
   // Check if citizen scanned a department-specific QR code (?dept=... or ?office=...)
   const deptParam = searchParams.get('dept') || searchParams.get('office');
-  const lockedDepartment = useMemo<DepartmentDef | null>(() => {
-    return resolveDepartment(deptParam);
+  const lockedDepartment = useMemo<DepartmentDef>(() => {
+    return resolveDepartment(deptParam) || COMMON_DEPARTMENTS[0];
   }, [deptParam]);
 
   // Form states
@@ -59,8 +59,8 @@ export const PublicReportPage: React.FC = () => {
   const [reporterPhone, setReporterPhone] = useState('');
   const [corruptionType, setCorruptionType] = useState<CorruptionType | ''>('');
   const [office, setOffice] = useState(() => {
-    const initial = resolveDepartment(deptParam);
-    return initial ? formatDepartmentSubmission(initial) : '';
+    const initial = resolveDepartment(deptParam) || COMMON_DEPARTMENTS[0];
+    return formatDepartmentSubmission(initial);
   });
   const [personInvolved, setPersonInvolved] = useState('');
   const [incidentDate, setIncidentDate] = useState(() => {
@@ -73,9 +73,7 @@ export const PublicReportPage: React.FC = () => {
 
   // Keep office locked whenever department param changes
   useEffect(() => {
-    if (lockedDepartment) {
-      setOffice(formatDepartmentSubmission(lockedDepartment));
-    }
+    setOffice(formatDepartmentSubmission(lockedDepartment));
   }, [lockedDepartment]);
 
   // UI / Submission states
@@ -176,7 +174,8 @@ export const PublicReportPage: React.FC = () => {
     if (!corruptionType) {
       newErrors.corruptionType = t('errorRequiredField');
     }
-    if (!office.trim()) {
+    const resolvedOffice = office.trim() || formatDepartmentSubmission(lockedDepartment);
+    if (!resolvedOffice) {
       newErrors.office = t('errorRequiredField');
     }
     if (!incidentDate) {
@@ -249,7 +248,7 @@ export const PublicReportPage: React.FC = () => {
 
     const inputData: CreateReportInput = {
       type: corruptionType as CorruptionType,
-      office: office.trim(),
+      office: office.trim() || formatDepartmentSubmission(lockedDepartment),
       personInvolved: personInvolved.trim() || undefined,
       incidentDate,
       location: location.trim(),
@@ -294,7 +293,7 @@ export const PublicReportPage: React.FC = () => {
     setReporterName('');
     setReporterPhone('');
     setCorruptionType('');
-    setOffice(lockedDepartment ? formatDepartmentSubmission(lockedDepartment) : '');
+    setOffice(formatDepartmentSubmission(lockedDepartment));
     setPersonInvolved('');
     setIncidentDate(new Date().toISOString().split('T')[0]);
     setLocation('');
@@ -551,96 +550,40 @@ export const PublicReportPage: React.FC = () => {
               )}
             </div>
 
-            {/* Office or Department Section */}
-            {lockedDepartment ? (
-              <div className="space-y-1.5">
-                <label className="block text-xs sm:text-sm font-bold text-[#0B1F3A]">
-                  {t('lockedDeptBannerTitle')}
-                </label>
-                <div className="p-4 rounded-2xl bg-[#E8EEF7]/70 border-2 border-[#0B1F3A]/20 flex items-start gap-3.5 shadow-xs">
-                  <div className="p-2.5 rounded-xl bg-[#0B1F3A] text-[#F5B700] shrink-0 mt-0.5 shadow-xs">
-                    <Building2 className="w-5 h-5" />
+            {/* Office or Department Section - Locked to Pre-Assigned Bureau */}
+            <div className="space-y-1.5">
+              <label className="block text-xs sm:text-sm font-bold text-[#0B1F3A]">
+                {t('lockedDeptBannerTitle')}
+              </label>
+              <div className="p-4 rounded-2xl bg-[#E8EEF7]/70 border-2 border-[#0B1F3A]/20 flex items-start gap-3.5 shadow-xs">
+                <div className="p-2.5 rounded-xl bg-[#0B1F3A] text-[#F5B700] shrink-0 mt-0.5 shadow-xs">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#0B1F3A] text-[#F5B700]">
+                      {lockedDepartment.code.toUpperCase()}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <Lock className="w-3 h-3" />
+                      <span>{t('lockedDeptBadge')}</span>
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#0B1F3A] text-[#F5B700]">
-                        {lockedDepartment.code.toUpperCase()}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        <Lock className="w-3 h-3" />
-                        <span>{t('lockedDeptBadge')}</span>
-                      </span>
-                    </div>
-                    <p className="text-base sm:text-lg font-black text-[#0B1F3A] mt-1.5 leading-snug">
-                      {lang === 'am' ? lockedDepartment.am : lockedDepartment.en}
+                  <p className="text-base sm:text-lg font-black text-[#0B1F3A] mt-1.5 leading-snug">
+                    {lang === 'am' ? lockedDepartment.am : lockedDepartment.en}
+                  </p>
+                  {lockedDepartment.id !== 'custom' && (
+                    <p className="text-xs font-semibold text-slate-600 mt-0.5">
+                      {lang === 'am' ? lockedDepartment.en : lockedDepartment.am}
                     </p>
-                    {lockedDepartment.id !== 'custom' && (
-                      <p className="text-xs font-semibold text-slate-600 mt-0.5">
-                        {lang === 'am' ? lockedDepartment.en : lockedDepartment.am}
-                      </p>
-                    )}
-                    <p className="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{t('lockedDeptDesc')}</span>
-                    </p>
-                  </div>
+                  )}
+                  <p className="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>{t('lockedDeptDesc')}</span>
+                  </p>
                 </div>
               </div>
-            ) : (
-              <div className="space-y-2">
-                <label htmlFor="office-input" className="block text-xs sm:text-sm font-bold text-[#0B1F3A]">
-                  {t('officeLabel')} <span className="text-rose-600 font-extrabold">*</span>
-                </label>
-                <div className="relative">
-                  <Building2 className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    id="office-input"
-                    type="text"
-                    value={office}
-                    onChange={(e) => {
-                      setOffice(e.target.value);
-                      if (errors.office) setErrors((prev) => ({ ...prev, office: '' }));
-                    }}
-                    placeholder={t('officePlaceholder')}
-                    aria-invalid={!!errors.office}
-                    className={`w-full pl-10 pr-3.5 min-h-[48px] rounded-xl border bg-[#F8FAFC] focus:bg-white text-slate-900 placeholder:text-slate-400 font-medium text-sm focus:outline-none focus:border-[#0B1F3A] focus:ring-2 focus:ring-[#F5B700] transition-colors ${
-                      errors.office ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-300'
-                    }`}
-                  />
-                </div>
-                {errors.office && <p className="text-xs text-rose-700 font-bold">{errors.office}</p>}
-
-                {/* Department suggestions as clean chips */}
-                <div className="pt-1 space-y-1.5">
-                  <span className="text-xs font-semibold text-slate-500 block">
-                    {t('quickOfficesLabel')}
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {COMMON_DEPARTMENTS.map((item) => {
-                      const label = lang === 'am' ? item.am : item.en;
-                      const isSelected = office === formatDepartmentSubmission(item) || office === label;
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => {
-                            setOffice(formatDepartmentSubmission(item));
-                            if (errors.office) setErrors((prev) => ({ ...prev, office: '' }));
-                          }}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer border ${
-                            isSelected
-                              ? 'bg-[#0B1F3A] text-[#F5B700] border-[#0B1F3A]'
-                              : 'bg-[#E8EEF7]/50 hover:bg-[#E8EEF7] text-slate-700 hover:text-[#0B1F3A] border-transparent hover:border-blue-200'
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
 
             {/* Person Involved */}
             <div className="space-y-1.5">
