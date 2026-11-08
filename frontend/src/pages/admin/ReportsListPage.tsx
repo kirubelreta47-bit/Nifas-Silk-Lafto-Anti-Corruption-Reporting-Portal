@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 10;
@@ -98,6 +99,18 @@ export const ReportsListPage: React.FC = () => {
 
     return counts;
   }, [allReports]);
+
+  // Currently selected DepartmentDef
+  const selectedDeptDef = useMemo(() => {
+    if (officeFilter === 'all') return null;
+    return (
+      COMMON_DEPARTMENTS.find(
+        (d) =>
+          d.en.toLowerCase() === officeFilter.toLowerCase() ||
+          officeFilter.toLowerCase().includes(d.en.toLowerCase())
+      ) || null
+    );
+  }, [officeFilter]);
 
   // Filtered reports for current selection
   const filteredReports = useMemo(() => {
@@ -249,102 +262,159 @@ export const ReportsListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 1. DEPARTMENT VISUAL DISTRIBUTION HEAT STRIP */}
+      {/* 1. CLEAN VISUAL DISTRIBUTION BAR (SIMPLIFIED & HARMONIOUS FOR THE EYE) */}
       {allReports.length > 0 && (
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2.5">
           <div className="flex items-center justify-between text-xs font-bold text-slate-700">
             <span className="flex items-center gap-1.5">
               <Building2 className="w-4 h-4 text-[#F5B700]" />
-              <span>{t('departmentShare')} (Report Volume Distribution)</span>
+              <span>{t('departmentShare')}</span>
             </span>
             <span className="text-slate-500 font-mono text-[11px]">
-              {allReports.length} Total Reports
+              {allReports.length} {t('reportsCount')}
             </span>
           </div>
 
-          {/* Segmented Distribution Bar */}
-          <div className="w-full h-4 rounded-xl overflow-hidden flex bg-slate-100">
+          {/* Segmented Distribution Bar - Unified, Cohesive Navy & Slate Tones */}
+          <div className="w-full h-3.5 rounded-full overflow-hidden flex bg-slate-100 divide-x divide-white">
             {COMMON_DEPARTMENTS.map((dept, index) => {
               const count = departmentCounts[dept.id] || 0;
               if (count === 0) return null;
               const pct = Math.round((count / allReports.length) * 100);
-              const colors = [
-                'bg-rose-600 hover:bg-rose-700',
-                'bg-amber-500 hover:bg-amber-600',
-                'bg-[#0B1F3A] hover:bg-[#122b4d]',
-                'bg-blue-600 hover:bg-blue-700',
-                'bg-purple-600 hover:bg-purple-700',
-                'bg-emerald-600 hover:bg-emerald-700',
-                'bg-teal-600 hover:bg-teal-700',
-                'bg-indigo-600 hover:bg-indigo-700',
+              const isSelected =
+                officeFilter !== 'all' && officeFilter.toLowerCase().includes(dept.en.toLowerCase());
+
+              // Eye-friendly harmonious navy tones from dark to mid-tone
+              const navyTones = [
+                'bg-[#0B1F3A]',
+                'bg-[#173359]',
+                'bg-[#23487a]',
+                'bg-[#305e9c]',
+                'bg-[#4076be]',
+                'bg-[#588ecf]',
+                'bg-[#79a7de]',
+                'bg-[#9ec0ed]',
               ];
-              const barColor = colors[index % colors.length];
+              const defaultColor = navyTones[index % navyTones.length];
+              const segmentClass = isSelected
+                ? 'bg-[#F5B700] ring-2 ring-[#0B1F3A] z-10'
+                : officeFilter !== 'all'
+                ? 'bg-slate-300 opacity-60 hover:opacity-100'
+                : `${defaultColor} hover:brightness-110`;
 
               return (
                 <div
                   key={dept.id}
                   onClick={() => handleSelectDepartmentTab(dept.en)}
-                  className={`${barColor} transition-all cursor-pointer relative group`}
+                  className={`${segmentClass} transition-all cursor-pointer relative`}
                   style={{ width: `${Math.max(6, pct)}%` }}
                   title={`${dept.en}: ${count} reports (${pct}%)`}
                 />
               );
             })}
           </div>
+
+          {/* Minimalist Key Stats below the bar */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 pt-0.5">
+            {COMMON_DEPARTMENTS.filter((d) => (departmentCounts[d.id] || 0) > 0)
+              .slice(0, 5)
+              .map((dept) => {
+                const count = departmentCounts[dept.id] || 0;
+                const pct = Math.round((count / allReports.length) * 100);
+                const isSelected =
+                  officeFilter !== 'all' && officeFilter.toLowerCase().includes(dept.en.toLowerCase());
+                return (
+                  <button
+                    key={dept.id}
+                    type="button"
+                    onClick={() => handleSelectDepartmentTab(dept.en)}
+                    className={`inline-flex items-center gap-1.5 transition-colors cursor-pointer text-[11px] ${
+                      isSelected
+                        ? 'font-bold text-[#0B1F3A] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200'
+                        : 'hover:text-[#0B1F3A]'
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        isSelected ? 'bg-[#F5B700]' : 'bg-[#0B1F3A]'
+                      }`}
+                    />
+                    <span className="font-medium">{lang === 'am' ? dept.am : dept.en}:</span>
+                    <span className="font-mono font-bold text-[#0B1F3A]">
+                      {count} ({pct}%)
+                    </span>
+                  </button>
+                );
+              })}
+          </div>
         </div>
       )}
 
-      {/* 2. DEPARTMENT TABS (CLICK TO ISOLATE REPORTS FOR EACH BUREAU) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          type="button"
-          onClick={() => handleSelectDepartmentTab('all')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-2 border ${
-            officeFilter === 'all'
-              ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-xs'
-              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5 text-[#F5B700]" />
-          <span>{t('allOfficesFilter')}</span>
-          <span className="font-mono text-[11px] px-1.5 py-0.2 rounded bg-white/20 text-white font-extrabold">
-            {allReports.length}
-          </span>
-        </button>
-
-        {COMMON_DEPARTMENTS.map((dept) => {
-          const isSelected = officeFilter.toLowerCase().includes(dept.en.toLowerCase());
-          const count = departmentCounts[dept.id] || 0;
-
-          return (
-            <button
-              key={dept.id}
-              type="button"
-              onClick={() => handleSelectDepartmentTab(dept.en)}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-2 border ${
-                isSelected
-                  ? 'bg-[#0B1F3A] text-white border-[#0B1F3A] shadow-xs ring-2 ring-[#F5B700]'
-                  : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
-              }`}
+      {/* 2. DEPARTMENT SELECTION DROPDOWN (NO SLIDING NEEDED) */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-[#0B1F3A] text-[#F5B700] shrink-0">
+            <Building2 className="w-5 h-5" />
+          </div>
+          <div>
+            <label
+              htmlFor="department-select-dropdown"
+              className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider"
             >
-              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-[#0B1F3A] font-extrabold">
-                {dept.code.toUpperCase()}
+              {t('filterByOffice')}
+            </label>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-sm sm:text-base font-extrabold text-[#0B1F3A]">
+                {selectedDeptDef
+                  ? (lang === 'am' ? selectedDeptDef.am : selectedDeptDef.en)
+                  : (officeFilter === 'all'
+                      ? (lang === 'am' ? 'ሁሉም መሥሪያ ቤቶች (አጠቃላይ)' : 'All Departments (General)')
+                      : officeFilter)}
               </span>
-              <span className="line-clamp-1">{lang === 'am' ? dept.am : dept.en}</span>
-              <span
-                className={`text-[11px] px-1.5 py-0.5 rounded-full font-extrabold ${
-                  isSelected
-                    ? 'bg-[#F5B700] text-[#0B1F3A]'
-                    : count > 0
-                    ? 'bg-blue-100 text-blue-900 font-mono'
-                    : 'bg-slate-100 text-slate-400'
-                }`}
-              >
-                {count}
+              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 text-[#0B1F3A] border border-slate-200">
+                {filteredReports.length} {t('reportsCount')}
               </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-80">
+            <select
+              id="department-select-dropdown"
+              value={officeFilter}
+              onChange={(e) => handleSelectDepartmentTab(e.target.value)}
+              className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-[#F8FAFC] hover:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B1F3A] focus:border-[#0B1F3A] transition-colors cursor-pointer shadow-xs appearance-none"
+            >
+              <option value="all">
+                {lang === 'am'
+                  ? `🏛️ ሁሉም መሥሪያ ቤቶች (ጠቅላላ ${allReports.length})`
+                  : `🏛️ All Departments (Total ${allReports.length})`}
+              </option>
+              {COMMON_DEPARTMENTS.map((dept) => {
+                const count = departmentCounts[dept.id] || 0;
+                const label = lang === 'am' ? dept.am : dept.en;
+                return (
+                  <option key={dept.id} value={dept.en}>
+                    {`[${dept.code.toUpperCase()}] ${label} (${count})`}
+                  </option>
+                );
+              })}
+            </select>
+            <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {officeFilter !== 'all' && (
+            <button
+              type="button"
+              onClick={() => handleSelectDepartmentTab('all')}
+              className="px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors cursor-pointer shrink-0"
+              title="Reset to All Departments"
+            >
+              {lang === 'am' ? 'ሁሉንም አሳይ' : 'Show All'}
             </button>
-          );
-        })}
+          )}
+        </div>
       </div>
 
       {/* Filter and Search Panel */}

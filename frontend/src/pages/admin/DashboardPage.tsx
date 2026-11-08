@@ -29,6 +29,7 @@ import {
   QrCode,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
   Sparkles,
 } from 'lucide-react';
 import {
@@ -280,22 +281,49 @@ export const DashboardPage: React.FC = () => {
 
       {/* 1. PRIMARY DEPARTMENT SELECTOR / DRILLDOWN BAR */}
       <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-[#0B1F3A] text-[#F5B700]">
               <Building2 className="w-4 h-4" />
             </span>
-            <h2 className="text-xs sm:text-sm font-black text-[#0B1F3A]">
-              {t('departmentAnalyticsTitle')}
-            </h2>
+            <div>
+              <h2 className="text-xs sm:text-sm font-black text-[#0B1F3A]">
+                {t('departmentAnalyticsTitle')}
+              </h2>
+              <span className="text-[11px] font-semibold text-slate-500">
+                {lang === 'am' ? 'በመሥሪያ ቤት ለይቶ የመመርመሪያ ሰሌዳ' : 'Interactive Department Filter'}
+              </span>
+            </div>
           </div>
-          <span className="text-[11px] font-semibold text-slate-500">
-            {lang === 'am' ? 'በመሥሪያ ቤት ለይቶ የመመርመሪያ ሰሌዳ' : 'Interactive Department Filter'}
-          </span>
+
+          {/* Clean Dropdown Selector */}
+          <div className="relative w-full sm:w-80">
+            <select
+              value={selectedDeptId}
+              onChange={(e) => setSelectedDeptId(e.target.value)}
+              className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-[#F8FAFC] hover:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B1F3A] cursor-pointer shadow-xs appearance-none"
+            >
+              <option value="all">
+                {lang === 'am'
+                  ? `🏛️ ሁሉም መሥሪያ ቤቶች (ጠቅላላ ${stats.total})`
+                  : `🏛️ All Departments (Total ${stats.total})`}
+              </option>
+              {COMMON_DEPARTMENTS.map((dept) => {
+                const count = stats.departmentBreakdown?.find((d) => d.id === dept.id)?.totalCount || 0;
+                const label = lang === 'am' ? dept.am : dept.en;
+                return (
+                  <option key={dept.id} value={dept.id}>
+                    {`[${dept.code.toUpperCase()}] ${label} (${count})`}
+                  </option>
+                );
+              })}
+            </select>
+            <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
         </div>
 
-        {/* Scrollable / Wrap Department Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {/* Responsive Wrap Department Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           <button
             type="button"
             onClick={() => setSelectedDeptId('all')}
