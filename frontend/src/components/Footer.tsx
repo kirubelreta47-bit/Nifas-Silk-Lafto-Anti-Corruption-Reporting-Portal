@@ -3,7 +3,6 @@ import { OfficialEmblem } from './OfficialEmblem';
 import { useLanguage } from '../context/LanguageContext';
 import { Shield, PhoneCall, MapPin, Lock, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { toEthiopianDate } from '../utils/ethiopianCalendar';
 
 export const Footer: React.FC = () => {
   const { t } = useLanguage();
@@ -72,7 +71,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <p>© {toEthiopianDate(new Date()).year} ዓ.ም ({new Date().getFullYear()}) {t('subCityTitle')} አስተዳደር። መብቱ በሕግ የተጠበቀ ነው።</p>
+          <p>© {new Date().getFullYear()} {t('subCityTitle')} አስተዳደር። መብቱ በሕግ የተጠበቀ ነው።</p>
           <p className="text-slate-400">Designed for Nifas Silk-Lafto Sub-City Citizens & Integrity Officers</p>
         </div>
       </div>

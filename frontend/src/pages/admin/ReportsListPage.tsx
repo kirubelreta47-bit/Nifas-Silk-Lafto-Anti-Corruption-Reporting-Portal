@@ -5,7 +5,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, CorruptionType, ReportStatus } from '../../types';
 import { COMMON_DEPARTMENTS, matchReportToDepartment } from '../../constants/departments';
-import { formatEthiopianDate } from '../../utils/ethiopianCalendar';
 import {
   Search,
   Filter,
@@ -564,8 +563,8 @@ export const ReportsListPage: React.FC = () => {
                           <p className="text-xs text-slate-600 line-clamp-1">
                             {report.description}
                           </p>
-                          <p className="text-[11px] text-slate-500 font-medium">
-                            {report.location} • {formatEthiopianDate(report.incidentDate || report.createdAt, lang)}
+                          <p className="text-[11px] text-slate-400">
+                            {report.location} • {new Date(report.createdAt).toLocaleDateString()}
                           </p>
                         </div>
 
@@ -666,13 +665,8 @@ export const ReportsListPage: React.FC = () => {
                           </div>
                         </td>
 
-                        <td className="py-4 px-4 whitespace-nowrap text-xs text-slate-700">
-                          <span className="font-bold text-[#0B1F3A] block">
-                            {formatEthiopianDate(report.incidentDate || report.createdAt, lang)}
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-mono block">
-                            {report.incidentDate || new Date(report.createdAt).toISOString().split('T')[0]}
-                          </span>
+                        <td className="py-4 px-4 whitespace-nowrap text-xs text-slate-600">
+                          {new Date(report.createdAt).toLocaleDateString()}
                         </td>
 
                         <td className="py-4 px-4 whitespace-nowrap">
@@ -741,8 +735,8 @@ export const ReportsListPage: React.FC = () => {
                         <Building2 className="w-3.5 h-3.5 text-[#0B1F3A]" />
                         <span>{report.office}</span>
                       </p>
-                      <p className="text-[11px] text-slate-500 font-medium">
-                        {report.location} • {formatEthiopianDate(report.incidentDate || report.createdAt, lang)}
+                      <p className="text-[11px] text-slate-500">
+                        {report.location} • {new Date(report.createdAt).toLocaleDateString()}
                       </p>
                     </div>
 

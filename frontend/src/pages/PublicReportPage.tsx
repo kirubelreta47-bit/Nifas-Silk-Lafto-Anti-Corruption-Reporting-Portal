@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { reportService } from '../services/reportService';
 import { apiClient } from '../services/apiClient';
-import { formatEthiopianDate } from '../utils/ethiopianCalendar';
 import { CorruptionType, EvidenceItem, CreateReportInput } from '../types';
 import { AudioRecorder } from '../components/AudioRecorder';
 import {
@@ -591,17 +590,9 @@ export const PublicReportPage: React.FC = () => {
                     }`}
                   />
                 </div>
-                {errors.incidentDate ? (
+                {errors.incidentDate && (
                   <p className="text-xs text-rose-700 font-bold">{errors.incidentDate}</p>
-                ) : incidentDate ? (
-                  <div className="flex items-center gap-1.5 text-xs text-slate-700 bg-[#E8EEF7]/70 px-3 py-1.5 rounded-xl border border-blue-200/60 font-semibold mt-1">
-                    <Calendar className="w-3.5 h-3.5 text-[#0B1F3A]" />
-                    <span>{lang === 'am' ? 'የኢትዮጵያ ቀን፡' : 'Ethiopian Date:'}</span>
-                    <span className="font-extrabold text-[#0B1F3A]">
-                      {formatEthiopianDate(incidentDate, lang)}
-                    </span>
-                  </div>
-                ) : null}
+                )}
               </div>
 
               <div className="space-y-1.5">

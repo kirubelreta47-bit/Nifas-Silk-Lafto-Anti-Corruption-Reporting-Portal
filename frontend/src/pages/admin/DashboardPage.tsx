@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { reportService } from '../../services/reportService';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
-import { formatEthiopianDate } from '../../utils/ethiopianCalendar';
 import { Report, CorruptionType, ReportStatus } from '../../types';
 import { COMMON_DEPARTMENTS, DepartmentDef } from '../../constants/departments';
 import {
@@ -887,8 +886,8 @@ export const DashboardPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-                  <span className="text-xs text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                    {formatEthiopianDate(report.incidentDate || report.createdAt, lang)}
+                  <span className="text-xs text-slate-500 font-medium">
+                    {new Date(report.createdAt).toLocaleDateString()}
                   </span>
                   <StatusBadge status={report.status} />
                   <Link
