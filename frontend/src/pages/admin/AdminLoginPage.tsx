@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { useLanguage } from '../../context/LanguageContext';
 import { OfficialEmblem } from '../../components/OfficialEmblem';
-import { Lock, Mail, KeyRound, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { Lock, Mail, KeyRound, AlertCircle, ArrowRight } from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
   const { t } = useLanguage();
@@ -50,12 +50,6 @@ export const AdminLoginPage: React.FC = () => {
       setLoading(false);
       setError(err.message || 'Login error');
     }
-  };
-
-  const handleFillDemo = () => {
-    setEmail('admin@nsl.gov.et');
-    setPassword('AdminPresentation2026!');
-    setError(null);
   };
 
   return (
@@ -149,18 +143,6 @@ export const AdminLoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Pre-fill Button */}
-          <div className="pt-2 border-t border-slate-100 text-center">
-            <button
-              type="button"
-              onClick={handleFillDemo}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#0B1F3A] bg-[#E8EEF7] hover:bg-[#dbe4f3] transition-colors focus:outline-none focus:ring-1 focus:ring-[#F5B700]"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#F5B700]" />
-              <span>{t('fillDemoCreds')}</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
