@@ -95,8 +95,8 @@ export const AdminLoginPage: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@nsl.gov.et"
-                  autoComplete="email"
+                  placeholder="name@nsl.gov.et"
+                  autoComplete="off"
                   required
                   className="w-full pl-11 pr-4 min-h-[48px] rounded-xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5B700] text-sm"
                 />
@@ -119,7 +119,7 @@ export const AdminLoginPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  autoComplete="current-password"
+                  autoComplete="off"
                   required
                   className="w-full pl-11 pr-4 min-h-[48px] rounded-xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5B700] text-sm"
                 />

@@ -120,7 +120,6 @@ export const translations = {
     passwordLabel: 'የይለፍ ቃል',
     signInBtn: 'ግባ',
     invalidCredentials: 'የተሳሳተ ኢሜይል ወይም የይለፍ ቃል አስገብተዋል',
-    fillDemoCreds: 'የሙከራ መለያ ሙላ (admin@nsl.gov.et)',
 
     // Dashboard Overview
     totalReports: 'ጠቅላላ ጥቆማዎች',
@@ -387,7 +386,6 @@ export const translations = {
     passwordLabel: 'Password',
     signInBtn: 'Sign In',
     invalidCredentials: 'Invalid email or password',
-    fillDemoCreds: 'Fill Demo Credentials (admin@nsl.gov.et)',
 
     // Dashboard Overview
     totalReports: 'Total Reports',
