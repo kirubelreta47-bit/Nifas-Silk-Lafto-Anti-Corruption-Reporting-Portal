@@ -108,6 +108,7 @@ export const translations = {
     // Admin Common
     adminDashboard: 'ዋና ዳሽቦርድ',
     adminReports: 'የጥቆማዎች ዝርዝር',
+    createDepartments: 'መሥሪያ ቤቶችን መፍጠር',
     adminQrCode: 'የጥቆማ ፖስተር (QR)',
     adminLogout: 'ውጣ',
     adminLoggedInAs: 'የገቡበት መለያ',
@@ -374,6 +375,7 @@ export const translations = {
     // Admin Common
     adminDashboard: 'Dashboard',
     adminReports: 'Reports',
+    createDepartments: 'Create Departments',
     adminQrCode: 'QR Code Poster',
     adminLogout: 'Sign Out',
     adminLoggedInAs: 'Signed in as',

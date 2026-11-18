@@ -4,7 +4,12 @@ import { reportService } from '../../services/reportService';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, CorruptionType, ReportStatus } from '../../types';
-import { COMMON_DEPARTMENTS, matchReportToDepartment } from '../../constants/departments';
+import {
+  COMMON_DEPARTMENTS,
+  getAllDepartments,
+  DepartmentDef,
+  matchReportToDepartment,
+} from '../../constants/departments';
 import {
   Search,
   Filter,
@@ -80,6 +85,14 @@ export const ReportsListPage: React.FC = () => {
     }
   };
 
+  const [departments, setDepartments] = useState<DepartmentDef[]>(() => getAllDepartments());
+
+  useEffect(() => {
+    const handleUpdate = () => setDepartments(getAllDepartments());
+    window.addEventListener('nsl_departments_updated', handleUpdate);
+    return () => window.removeEventListener('nsl_departments_updated', handleUpdate);
+  }, []);
+
   // All reports from service (unfiltered by office for stats and tabs)
   const allReports = useMemo(() => {
     return reportService.getReports();
@@ -88,29 +101,29 @@ export const ReportsListPage: React.FC = () => {
   // Compute departmental distribution for the visual bar and tab counts
   const departmentCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    COMMON_DEPARTMENTS.forEach((d) => (counts[d.id] = 0));
+    departments.forEach((d) => (counts[d.id] = 0));
 
     allReports.forEach((r) => {
-      const matched = matchReportToDepartment(r.office);
+      const matched = matchReportToDepartment(r.office, departments);
       if (matched) {
         counts[matched.id] = (counts[matched.id] || 0) + 1;
       }
     });
 
     return counts;
-  }, [allReports]);
+  }, [allReports, departments]);
 
   // Currently selected DepartmentDef
   const selectedDeptDef = useMemo(() => {
     if (officeFilter === 'all') return null;
     return (
-      COMMON_DEPARTMENTS.find(
+      departments.find(
         (d) =>
           d.en.toLowerCase() === officeFilter.toLowerCase() ||
           officeFilter.toLowerCase().includes(d.en.toLowerCase())
       ) || null
     );
-  }, [officeFilter]);
+  }, [officeFilter, departments]);
 
   // Filtered reports for current selection
   const filteredReports = useMemo(() => {
@@ -133,9 +146,9 @@ export const ReportsListPage: React.FC = () => {
 
   // Grouped reports by department (for "Grouped by Department" view)
   const groupedDepartmentReports = useMemo(() => {
-    return COMMON_DEPARTMENTS.map((dept) => {
+    return departments.map((dept) => {
       const deptReports = filteredReports.filter((r) => {
-        const m = matchReportToDepartment(r.office);
+        const m = matchReportToDepartment(r.office, departments);
         return (
           m?.id === dept.id ||
           r.office.toLowerCase().includes(dept.en.toLowerCase()) ||
@@ -303,12 +316,13 @@ export const ReportsListPage: React.FC = () => {
                   ? `🏛️ ሁሉም መሥሪያ ቤቶች (ጠቅላላ ${allReports.length})`
                   : `🏛️ All Departments (Total ${allReports.length})`}
               </option>
-              {COMMON_DEPARTMENTS.map((dept) => {
+              {departments.map((dept) => {
                 const count = departmentCounts[dept.id] || 0;
                 const label = lang === 'am' ? dept.am : dept.en;
+                const customTag = dept.isCustom ? (lang === 'am' ? ' [አዲስ]' : ' [Custom]') : '';
                 return (
                   <option key={dept.id} value={dept.en}>
-                    {`[${dept.code.toUpperCase()}] ${label} (${count})`}
+                    {`[${dept.code.toUpperCase()}] ${label}${customTag} (${count})`}
                   </option>
                 );
               })}
@@ -418,7 +432,7 @@ export const ReportsListPage: React.FC = () => {
               className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F5B700]"
             >
               <option value="all">{t('allOfficesFilter')}</option>
-              {COMMON_DEPARTMENTS.map((dept) => (
+              {departments.map((dept) => (
                 <option key={dept.id} value={dept.en}>
                   {lang === 'am' ? dept.am : dept.en}
                 </option>

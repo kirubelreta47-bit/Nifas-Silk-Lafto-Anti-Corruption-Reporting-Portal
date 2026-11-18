@@ -10,6 +10,7 @@ import {
   formatDepartmentSubmission,
   COMMON_DEPARTMENTS,
   DepartmentDef,
+  saveCustomDepartment,
 } from '../constants/departments';
 import {
   ShieldAlert,
@@ -74,6 +75,20 @@ export const PublicReportPage: React.FC = () => {
   useEffect(() => {
     setOffice(formatDepartmentSubmission(lockedDepartment));
   }, [lockedDepartment]);
+
+  // Sync latest departments from backend
+  useEffect(() => {
+    apiClient.getDepartments().then((remote) => {
+      if (!remote || remote.length === 0) return;
+      remote.forEach((d) => {
+        if (d.isCustom) saveCustomDepartment(d);
+      });
+      const resolved = resolveDepartment(deptParam);
+      if (resolved) {
+        setOffice(formatDepartmentSubmission(resolved));
+      }
+    });
+  }, [deptParam]);
 
   // UI / Submission states
   const [errors, setErrors] = useState<Record<string, string>>({});

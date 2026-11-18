@@ -6,6 +6,7 @@ import {
   EvidenceItem,
   AdminUser,
 } from '../types';
+import { DepartmentDef } from '../constants/departments';
 
 const rawApiUrl =
   (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) ||
@@ -203,5 +204,78 @@ export const apiClient = {
     }
 
     return { success: true, user: data.user, token: data.token };
+  },
+
+  // 11. Department Management
+  async getDepartments(): Promise<DepartmentDef[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/departments`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      if (!json.success || !Array.isArray(json.data)) return [];
+      return json.data.map((d: any) => ({
+        id: d.id,
+        code: d.code,
+        am: d.nameAm || d.am,
+        en: d.nameEn || d.en,
+        descriptionAm: d.descriptionAm,
+        descriptionEn: d.descriptionEn,
+        isCustom: d.isCustom ?? false,
+        createdAt: d.createdAt,
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async createDepartment(input: {
+    nameAm: string;
+    nameEn: string;
+    code?: string;
+    descriptionAm?: string;
+    descriptionEn?: string;
+  }): Promise<{ success: boolean; data?: DepartmentDef; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/departments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        return { success: false, error: json.error || 'Failed to create department' };
+      }
+      const d = json.data;
+      return {
+        success: true,
+        data: {
+          id: d.id,
+          code: d.code,
+          am: d.nameAm || d.am,
+          en: d.nameEn || d.en,
+          descriptionAm: d.descriptionAm,
+          descriptionEn: d.descriptionEn,
+          isCustom: d.isCustom ?? true,
+          createdAt: d.createdAt,
+        },
+      };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Network error' };
+    }
+  },
+
+  async deleteDepartment(id: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/departments/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   },
 };

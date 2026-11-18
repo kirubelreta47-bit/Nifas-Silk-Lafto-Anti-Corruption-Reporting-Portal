@@ -1,7 +1,8 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { useLanguage } from '../../context/LanguageContext';
-import { COMMON_DEPARTMENTS, DepartmentDef } from '../../constants/departments';
+import { COMMON_DEPARTMENTS, getAllDepartments, DepartmentDef } from '../../constants/departments';
 import {
   QrCode,
   Download,
@@ -38,14 +39,27 @@ export const QrCodePage: React.FC = () => {
     return defaultOrigin;
   }, []);
 
-  // Department Selection state
-  const [selectedDeptId, setSelectedDeptId] = useState<string>('land-admin');
+  const [searchParams] = useSearchParams();
+  const [departments, setDepartments] = useState<DepartmentDef[]>(() => getAllDepartments());
+
+  useEffect(() => {
+    const handleUpdate = () => setDepartments(getAllDepartments());
+    window.addEventListener('nsl_departments_updated', handleUpdate);
+    return () => window.removeEventListener('nsl_departments_updated', handleUpdate);
+  }, []);
+
+  // Department Selection state (can be pre-selected via ?dept= query param)
+  const initialDept = searchParams.get('dept') || 'land-admin';
+  const [selectedDeptId, setSelectedDeptId] = useState<string>(() => {
+    const current = getAllDepartments();
+    return current.some((d) => d.id === initialDept) ? initialDept : current[0]?.id || 'land-admin';
+  });
   const [copied, setCopied] = useState<boolean>(false);
 
   // Active department resolution
   const activeDept = useMemo<DepartmentDef>(() => {
-    return COMMON_DEPARTMENTS.find((d) => d.id === selectedDeptId) || COMMON_DEPARTMENTS[0];
-  }, [selectedDeptId]);
+    return departments.find((d) => d.id === selectedDeptId) || departments[0] || COMMON_DEPARTMENTS[0];
+  }, [selectedDeptId, departments]);
 
   // Compute final QR target destination URL with department parameter
   const computedQrUrl = useMemo<string>(() => {
@@ -237,11 +251,12 @@ export const QrCodePage: React.FC = () => {
               onChange={(e) => setSelectedDeptId(e.target.value)}
               className="w-full pl-4 pr-10 py-3 rounded-2xl border border-slate-300 text-sm sm:text-base font-bold bg-[#F8FAFC] text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B1F3A] focus:border-[#0B1F3A] cursor-pointer appearance-none shadow-xs transition-colors"
             >
-              {COMMON_DEPARTMENTS.map((dept) => {
+              {departments.map((dept) => {
                 const label = lang === 'am' ? dept.am : dept.en;
+                const customTag = dept.isCustom ? (lang === 'am' ? ' [አዲስ]' : ' [Custom]') : '';
                 return (
                   <option key={dept.id} value={dept.id}>
-                    {`[${dept.code.toUpperCase()}] ${label}`}
+                    {`[${dept.code.toUpperCase()}] ${label}${customTag}`}
                   </option>
                 );
               })}

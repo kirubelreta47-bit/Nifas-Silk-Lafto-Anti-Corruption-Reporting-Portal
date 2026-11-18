@@ -7,6 +7,7 @@ import { OfficialEmblem } from '../../components/OfficialEmblem';
 import {
   LayoutDashboard,
   FileSpreadsheet,
+  Building2,
   QrCode,
   LogOut,
   Menu,
@@ -47,6 +48,11 @@ export const AdminLayout: React.FC = () => {
       label: t('adminReports'),
       icon: FileSpreadsheet,
       badge: stats.new > 0 ? stats.new : undefined,
+    },
+    {
+      to: '/admin/departments',
+      label: t('createDepartments'),
+      icon: Building2,
     },
     {
       to: '/admin/qr',

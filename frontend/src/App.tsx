@@ -12,6 +12,7 @@ import { DashboardPage } from './pages/admin/DashboardPage';
 import { ReportsListPage } from './pages/admin/ReportsListPage';
 import { ReportDetailPage } from './pages/admin/ReportDetailPage';
 import { QrCodePage } from './pages/admin/QrCodePage';
+import { DepartmentsPage } from './pages/admin/DepartmentsPage';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="reports" element={<ReportsListPage />} />
                 <Route path="reports/:id" element={<ReportDetailPage />} />
+                <Route path="departments" element={<DepartmentsPage />} />
                 <Route path="qr" element={<QrCodePage />} />
               </Route>
 

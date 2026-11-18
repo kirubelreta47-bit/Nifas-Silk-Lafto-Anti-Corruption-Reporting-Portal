@@ -99,3 +99,23 @@ export interface ReportStats {
   officeBreakdown: { office: string; count: number }[];
 }
 
+export interface Department {
+  id: string;
+  code: string;
+  nameAm: string;
+  nameEn: string;
+  descriptionAm?: string;
+  descriptionEn?: string;
+  isCustom: boolean;
+  createdAt?: string;
+}
+
+export interface CreateDepartmentInput {
+  id?: string;
+  code?: string;
+  nameAm: string;
+  nameEn: string;
+  descriptionAm?: string;
+  descriptionEn?: string;
+}
+

@@ -9,8 +9,10 @@ import {
   ReportStats,
   AdminUser,
   EvidenceItem,
+  Department,
+  CreateDepartmentInput,
 } from '../types/index.js';
-import { INITIAL_SEED_REPORTS, DEMO_ADMIN_USER } from './seedData.js';
+import { INITIAL_SEED_REPORTS, DEMO_ADMIN_USER, INITIAL_SEED_DEPARTMENTS } from './seedData.js';
 
 const { Pool } = pg;
 
@@ -25,6 +27,7 @@ export interface DbAdminUser extends AdminUser {
 // In-memory fallback repository strictly for development/testing
 let inMemoryReports: Report[] = [];
 let inMemoryAdmin: DbAdminUser | null = null;
+let inMemoryDepartments: Department[] = JSON.parse(JSON.stringify(INITIAL_SEED_DEPARTMENTS));
 
 export const getPool = (): pg.Pool | null => {
   if (pool) return pool;
@@ -70,6 +73,9 @@ export const initDatabase = async (): Promise<boolean> => {
     };
     if (inMemoryReports.length === 0) {
       inMemoryReports = JSON.parse(JSON.stringify(INITIAL_SEED_REPORTS));
+    }
+    if (inMemoryDepartments.length === 0) {
+      inMemoryDepartments = JSON.parse(JSON.stringify(INITIAL_SEED_DEPARTMENTS));
     }
     isConnectedToPostgres = false;
     return false;
@@ -140,6 +146,17 @@ export const initDatabase = async (): Promise<boolean> => {
         CREATE INDEX IF NOT EXISTS idx_reports_type ON reports(type);
         CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC);
         CREATE INDEX IF NOT EXISTS idx_evidence_report_id ON evidence(report_id);
+
+        CREATE TABLE IF NOT EXISTS departments (
+          id VARCHAR(100) PRIMARY KEY,
+          code VARCHAR(100) NOT NULL,
+          name_am VARCHAR(255) NOT NULL,
+          name_en VARCHAR(255) NOT NULL,
+          description_am TEXT,
+          description_en TEXT,
+          is_custom BOOLEAN DEFAULT false,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
       `);
 
       // 2. Safe Initial Admin Bootstrap & Sync
@@ -211,6 +228,29 @@ export const initDatabase = async (): Promise<boolean> => {
               ]
             );
           }
+        }
+      }
+
+      // 4. Seed Standard Departments if empty
+      const deptsCountRes = await client.query('SELECT COUNT(*) FROM departments');
+      const deptsCount = parseInt(deptsCountRes.rows[0].count, 10);
+      if (deptsCount === 0) {
+        console.log('🏛️ [Database] Seeding standard sub-city departments into Neon PostgreSQL...');
+        for (const dept of INITIAL_SEED_DEPARTMENTS) {
+          await client.query(
+            `INSERT INTO departments (id, code, name_am, name_en, description_am, description_en, is_custom, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+             ON CONFLICT (id) DO NOTHING`,
+            [
+              dept.id,
+              dept.code,
+              dept.nameAm,
+              dept.nameEn,
+              dept.descriptionAm || null,
+              dept.descriptionEn || null,
+              dept.isCustom,
+            ]
+          );
         }
       }
 
@@ -744,6 +784,101 @@ export const db = {
       officeBreakdown,
       timeline,
     };
+  },
+
+  // ==========================================
+  // Department Management Methods
+  // ==========================================
+
+  getDepartments: async (): Promise<Department[]> => {
+    if (isConnectedToPostgres && pool) {
+      const res = await pool.query(`
+        SELECT 
+          id, 
+          code, 
+          name_am AS "nameAm", 
+          name_en AS "nameEn", 
+          description_am AS "descriptionAm", 
+          description_en AS "descriptionEn", 
+          is_custom AS "isCustom", 
+          created_at AS "createdAt"
+        FROM departments
+        ORDER BY is_custom ASC, created_at ASC
+      `);
+      return res.rows;
+    }
+    return inMemoryDepartments;
+  },
+
+  createDepartment: async (input: CreateDepartmentInput): Promise<Department> => {
+    const rawId = input.id || input.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const id = rawId || `dept-${Date.now()}`;
+    const code = input.code || id.slice(0, 15);
+    const isCustom = true;
+
+    if (isConnectedToPostgres && pool) {
+      const res = await pool.query(
+        `INSERT INTO departments 
+          (id, code, name_am, name_en, description_am, description_en, is_custom, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+         ON CONFLICT (id) DO UPDATE SET
+          name_am = EXCLUDED.name_am,
+          name_en = EXCLUDED.name_en,
+          description_am = EXCLUDED.description_am,
+          description_en = EXCLUDED.description_en
+         RETURNING 
+          id, 
+          code, 
+          name_am AS "nameAm", 
+          name_en AS "nameEn", 
+          description_am AS "descriptionAm", 
+          description_en AS "descriptionEn", 
+          is_custom AS "isCustom", 
+          created_at AS "createdAt"`,
+        [
+          id,
+          code,
+          input.nameAm,
+          input.nameEn,
+          input.descriptionAm || null,
+          input.descriptionEn || null,
+          isCustom,
+        ]
+      );
+      return res.rows[0];
+    }
+
+    const newDept: Department = {
+      id,
+      code,
+      nameAm: input.nameAm,
+      nameEn: input.nameEn,
+      descriptionAm: input.descriptionAm,
+      descriptionEn: input.descriptionEn,
+      isCustom: true,
+      createdAt: new Date().toISOString(),
+    };
+    const existingIdx = inMemoryDepartments.findIndex((d) => d.id === id);
+    if (existingIdx >= 0) {
+      inMemoryDepartments[existingIdx] = newDept;
+    } else {
+      inMemoryDepartments.push(newDept);
+    }
+    return newDept;
+  },
+
+  deleteDepartment: async (id: string): Promise<boolean> => {
+    if (isConnectedToPostgres && pool) {
+      const res = await pool.query(
+        'DELETE FROM departments WHERE id = $1 AND is_custom = true RETURNING id',
+        [id]
+      );
+      return (res.rowCount ?? 0) > 0;
+    }
+
+    const before = inMemoryDepartments.length;
+    inMemoryDepartments = inMemoryDepartments.filter((d) => !(d.id === id && d.isCustom));
+    return inMemoryDepartments.length < before;
   },
 
   close: async () => {

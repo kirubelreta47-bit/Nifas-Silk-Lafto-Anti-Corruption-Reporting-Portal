@@ -84,6 +84,33 @@ test('Backend Repository updates status and appends decision log', async () => {
   assert.equal(updated?.log[0].adminEmail, 'lead_investigator@nsl.gov.et');
 });
 
+test('Backend Repository manages departments (fetch, create, delete)', async () => {
+  const depts = await db.getDepartments();
+  assert.ok(depts.length >= 8, 'Must have at least 8 standard departments');
+  assert.ok(depts.some((d) => d.id === 'land-admin'));
+
+  const created = await db.createDepartment({
+    id: 'test-water-agency',
+    code: 'water',
+    nameEn: 'Water & Sewerage Agency',
+    nameAm: 'የውሃና ፍሳሽ ኤጀንሲ',
+    descriptionEn: 'Municipal water supply and drainage monitoring',
+  });
+
+  assert.equal(created.id, 'test-water-agency');
+  assert.equal(created.isCustom, true);
+
+  const updatedDepts = await db.getDepartments();
+  assert.ok(updatedDepts.some((d) => d.id === 'test-water-agency'));
+
+  const deleted = await db.deleteDepartment('test-water-agency');
+  assert.equal(deleted, true);
+
+  // Protected standard bureau cannot be deleted
+  const standardDeleted = await db.deleteDepartment('land-admin');
+  assert.equal(standardDeleted, false);
+});
+
 test('Storage Service handles file upload, preserves original name and generates read stream', async () => {
   const samplePdfBuffer = Buffer.from('%PDF-1.4 sample test document bytes');
   const stored = await storageService.upload(samplePdfBuffer, 'test_bribe_proof.pdf', 'application/pdf');

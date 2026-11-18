@@ -55,6 +55,18 @@ CREATE TABLE IF NOT EXISTS decision_logs (
   timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 5. Departments Table (Standard and Admin-created Custom Bureaus)
+CREATE TABLE IF NOT EXISTS departments (
+  id VARCHAR(100) PRIMARY KEY,
+  code VARCHAR(100) NOT NULL,
+  name_am VARCHAR(255) NOT NULL,
+  name_en VARCHAR(255) NOT NULL,
+  description_am TEXT,
+  description_en TEXT,
+  is_custom BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create performance indexes for common admin dashboard queries
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_type ON reports(type);

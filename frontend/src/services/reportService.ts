@@ -7,7 +7,7 @@ import {
   DecisionLog,
 } from '../types';
 import { apiClient } from './apiClient';
-import { COMMON_DEPARTMENTS, matchReportToDepartment } from '../constants/departments';
+import { COMMON_DEPARTMENTS, getAllDepartments, matchReportToDepartment } from '../constants/departments';
 
 const STORAGE_KEY = 'nsl_corruption_reports';
 const RATE_LIMIT_KEY = 'nsl_last_submission_time';
@@ -890,7 +890,7 @@ export const reportService = {
       .slice(0, 5);
 
     // Comprehensive Department Breakdown & Ranking for Visual Representation
-    const departmentBreakdown = COMMON_DEPARTMENTS.map((dept) => {
+    const departmentBreakdown = getAllDepartments().map((dept) => {
       const matchingReports = allReports.filter((r) => {
         const m = matchReportToDepartment(r.office);
         return (

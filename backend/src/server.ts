@@ -5,6 +5,7 @@ import healthRoutes from './routes/healthRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import departmentRoutes from './routes/departmentRoutes.js';
 
 export const createServer = () => {
   const app = express();
@@ -58,6 +59,9 @@ export const createServer = () => {
 
   app.use('/api/upload', uploadRoutes);
   app.use('/upload', uploadRoutes);
+
+  app.use('/api/departments', departmentRoutes);
+  app.use('/departments', departmentRoutes);
 
   // Root Welcome Route
   app.get('/', (_req: Request, res: Response) => {

@@ -4,7 +4,7 @@ import { reportService } from '../../services/reportService';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, CorruptionType, ReportStatus } from '../../types';
-import { COMMON_DEPARTMENTS, DepartmentDef } from '../../constants/departments';
+import { COMMON_DEPARTMENTS, getAllDepartments, DepartmentDef } from '../../constants/departments';
 import {
   FileText,
   AlertCircle,
@@ -58,6 +58,13 @@ export const DashboardPage: React.FC = () => {
 
   // Department Drilldown Filter state
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
+  const [departments, setDepartments] = useState<DepartmentDef[]>(() => getAllDepartments());
+
+  useEffect(() => {
+    const handleUpdate = () => setDepartments(getAllDepartments());
+    window.addEventListener('nsl_departments_updated', handleUpdate);
+    return () => window.removeEventListener('nsl_departments_updated', handleUpdate);
+  }, []);
 
   // Stats and reports state
   const [stats, setStats] = useState(() => reportService.getReportStats(30));
@@ -65,13 +72,13 @@ export const DashboardPage: React.FC = () => {
 
   const selectedDeptDef = useMemo(() => {
     if (selectedDeptId === 'all') return null;
-    return COMMON_DEPARTMENTS.find((d) => d.id === selectedDeptId) || null;
-  }, [selectedDeptId]);
+    return departments.find((d) => d.id === selectedDeptId) || null;
+  }, [selectedDeptId, departments]);
 
   const refreshData = (days: 7 | 30 | 90 = timeRange, deptId: string = selectedDeptId) => {
     setLoading(true);
     setTimeout(() => {
-      const officeParam = deptId === 'all' ? undefined : COMMON_DEPARTMENTS.find((d) => d.id === deptId)?.en;
+      const officeParam = deptId === 'all' ? undefined : departments.find((d) => d.id === deptId)?.en;
       setStats(reportService.getReportStats(days, officeParam));
       setReports(reportService.getReports(officeParam ? { office: officeParam } : undefined));
       setLoading(false);
@@ -308,12 +315,13 @@ export const DashboardPage: React.FC = () => {
                   ? `🏛️ ሁሉም መሥሪያ ቤቶች (ጠቅላላ ${stats.total})`
                   : `🏛️ All Departments (Total ${stats.total})`}
               </option>
-              {COMMON_DEPARTMENTS.map((dept) => {
+              {departments.map((dept) => {
                 const count = stats.departmentBreakdown?.find((d) => d.id === dept.id)?.totalCount || 0;
                 const label = lang === 'am' ? dept.am : dept.en;
+                const customTag = dept.isCustom ? (lang === 'am' ? ' [አዲስ]' : ' [Custom]') : '';
                 return (
                   <option key={dept.id} value={dept.id}>
-                    {`[${dept.code.toUpperCase()}] ${label} (${count})`}
+                    {`[${dept.code.toUpperCase()}] ${label}${customTag} (${count})`}
                   </option>
                 );
               })}

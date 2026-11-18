@@ -1,4 +1,4 @@
-import { Report, AdminUser } from '../types/index.js';
+import { Report, AdminUser, Department } from '../types/index.js';
 
 const SAMPLE_RECEIPT_IMG =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23f1f5f9"/><text x="20" y="40" font-family="sans-serif" font-size="16" font-weight="bold" fill="%230b1f3a">የክፍያ ደረሰኝ ቅጂ / Payment Receipt Proof</text><line x1="20" y1="55" x2="380" y2="55" stroke="%23cbd5e1" stroke-width="2"/><text x="20" y="85" font-family="sans-serif" font-size="14" fill="%23334155">Official Fee: 250 ETB</text><text x="20" y="115" font-family="sans-serif" font-size="14" fill="%23dc2626" font-weight="bold">Unrecorded Cash Demanded: 15,000 ETB</text><text x="20" y="145" font-family="sans-serif" font-size="12" fill="%2364748b">Location: Woreda 03 Service Desk</text><rect x="20" y="170" width="160" height="70" fill="%23e2e8f0" rx="4"/><text x="30" y="210" font-family="sans-serif" font-size="12" fill="%23475569">[Official Stamp Seal]</text></svg>';
@@ -24,6 +24,65 @@ export const DEMO_ADMIN_USER: AdminUser = {
   name: 'Alemayehu Tadesse',
   role: 'admin',
 };
+
+export const INITIAL_SEED_DEPARTMENTS: Department[] = [
+  {
+    id: 'land-admin',
+    code: 'land',
+    nameAm: 'የመሬት ልማትና አስተዳደር ጽ/ቤት',
+    nameEn: 'Land Administration & Management',
+    isCustom: false,
+  },
+  {
+    id: 'trade-licensing',
+    code: 'trade',
+    nameAm: 'የንግድና ገበያ ልማት ጽ/ቤት',
+    nameEn: 'Trade & Licensing Bureau',
+    isCustom: false,
+  },
+  {
+    id: 'housing-dev',
+    code: 'housing',
+    nameAm: 'የቤቶች አስተዳደርና ልማት ኤጀንሲ',
+    nameEn: 'Housing Development Agency',
+    isCustom: false,
+  },
+  {
+    id: 'construction-permits',
+    code: 'construction',
+    nameAm: 'የኮንስትራክሽን ፈቃድና ቁጥጥር',
+    nameEn: 'Construction & Building Permits',
+    isCustom: false,
+  },
+  {
+    id: 'vital-events',
+    code: 'vital-id',
+    nameAm: 'የወሳኝ ኩነትና መታወቂያ አገልግሎት',
+    nameEn: 'Vital Events & National ID',
+    isCustom: false,
+  },
+  {
+    id: 'traffic-transport',
+    code: 'traffic',
+    nameAm: 'የትራፊክ ማኔጅመንትና ትራንስፖርት',
+    nameEn: 'Traffic Management & Transport',
+    isCustom: false,
+  },
+  {
+    id: 'finance-procurement',
+    code: 'finance',
+    nameAm: 'የፋይናንስና ኢኮኖሚ ልማት (ግዢ)',
+    nameEn: 'Finance & Procurement',
+    isCustom: false,
+  },
+  {
+    id: 'woreda-enforcement',
+    code: 'enforcement',
+    nameAm: 'የወረዳ ደንብ ማስከበር',
+    nameEn: 'Woreda Code Enforcement',
+    isCustom: false,
+  },
+];
 
 export const INITIAL_SEED_REPORTS: Report[] = [
   {
