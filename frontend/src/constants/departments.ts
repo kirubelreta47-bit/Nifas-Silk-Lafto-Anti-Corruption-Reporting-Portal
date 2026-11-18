@@ -117,18 +117,25 @@ export const COMMON_DEPARTMENTS: DepartmentDef[] = STANDARD_DEPARTMENT_PRESETS;
 
 export const DEPARTMENTS_STORAGE_KEY = 'nsl_custom_departments';
 
+// In-memory cache to avoid repeated disk reads and JSON parsing
+let inMemoryCachedDepts: DepartmentDef[] | null = null;
+
 /**
- * Retrieve active departments created / chosen by admin from local storage
+ * Retrieve active departments created / chosen by admin from memory / local storage
  */
 export function getCustomDepartments(): DepartmentDef[] {
+  if (inMemoryCachedDepts !== null) {
+    return inMemoryCachedDepts;
+  }
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
     return [];
   }
   try {
     const raw = localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw);
+    inMemoryCachedDepts = raw ? JSON.parse(raw) : [];
+    return inMemoryCachedDepts!;
   } catch {
+    inMemoryCachedDepts = [];
     return [];
   }
 }
@@ -149,11 +156,36 @@ export function saveCustomDepartment(dept: DepartmentDef): DepartmentDef {
       { ...dept, isCustom: true, createdAt: dept.createdAt || new Date().toISOString() },
     ];
   }
+  inMemoryCachedDepts = updated;
   if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
     localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('nsl_departments_updated', { detail: updated }));
   }
   return dept;
+}
+
+/**
+ * Batch save multiple departments without repeated disk writes or event storms
+ */
+export function saveDepartmentsBatch(depts: DepartmentDef[]): DepartmentDef[] {
+  if (!depts || depts.length === 0) return getCustomDepartments();
+  const current = getCustomDepartments();
+  const map = new Map<string, DepartmentDef>();
+  current.forEach((d) => map.set(d.id, d));
+  depts.forEach((d) => {
+    map.set(d.id, {
+      ...d,
+      isCustom: true,
+      createdAt: d.createdAt || new Date().toISOString(),
+    });
+  });
+  const updated = Array.from(map.values());
+  inMemoryCachedDepts = updated;
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent('nsl_departments_updated', { detail: updated }));
+  }
+  return updated;
 }
 
 /**
@@ -163,6 +195,7 @@ export function deleteCustomDepartment(id: string): boolean {
   const current = getCustomDepartments();
   const filtered = current.filter((d) => d.id !== id);
   if (filtered.length !== current.length) {
+    inMemoryCachedDepts = filtered;
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(filtered));
       window.dispatchEvent(new CustomEvent('nsl_departments_updated', { detail: filtered }));

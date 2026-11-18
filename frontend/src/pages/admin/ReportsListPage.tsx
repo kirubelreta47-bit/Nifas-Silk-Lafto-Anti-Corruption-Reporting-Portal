@@ -144,8 +144,9 @@ export const ReportsListPage: React.FC = () => {
     return reports;
   }, [search, statusFilter, typeFilter, officeFilter, anonymousOnly, dateFrom, dateTo, syncTrigger]);
 
-  // Grouped reports by department (for "Grouped by Department" view)
+  // Grouped reports by department (computed only when "Grouped by Department" view is active)
   const groupedDepartmentReports = useMemo(() => {
+    if (viewMode !== 'grouped') return [];
     return departments.map((dept) => {
       const deptReports = filteredReports.filter((r) => {
         const m = matchReportToDepartment(r.office, departments);
@@ -163,7 +164,7 @@ export const ReportsListPage: React.FC = () => {
         newCount: deptReports.filter((r) => r.status === 'new').length,
       };
     });
-  }, [filteredReports]);
+  }, [viewMode, departments, filteredReports]);
 
   // Pagination calculation
   const totalReports = filteredReports.length;

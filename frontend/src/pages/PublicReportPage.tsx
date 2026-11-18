@@ -10,7 +10,9 @@ import {
   formatDepartmentSubmission,
   COMMON_DEPARTMENTS,
   DepartmentDef,
+  getAllDepartments,
   saveCustomDepartment,
+  saveDepartmentsBatch,
 } from '../constants/departments';
 import {
   ShieldAlert,
@@ -89,9 +91,7 @@ export const PublicReportPage: React.FC = () => {
   useEffect(() => {
     apiClient.getDepartments().then((remote) => {
       if (!remote || remote.length === 0) return;
-      remote.forEach((d) => {
-        saveCustomDepartment(d);
-      });
+      saveDepartmentsBatch(remote);
       const active = getAllDepartments();
       const resolved = resolveDepartment(deptParam, active);
       if (resolved) {

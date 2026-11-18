@@ -42,6 +42,8 @@ export const getPool = (): pg.Pool | null => {
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
     });
 
     pool.on('error', (err) => {
@@ -143,6 +145,7 @@ export const initDatabase = async (): Promise<boolean> => {
         CREATE INDEX IF NOT EXISTS idx_reports_type ON reports(type);
         CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC);
         CREATE INDEX IF NOT EXISTS idx_evidence_report_id ON evidence(report_id);
+        CREATE INDEX IF NOT EXISTS idx_decision_logs_report_id ON decision_logs(report_id);
 
         CREATE TABLE IF NOT EXISTS departments (
           id VARCHAR(100) PRIMARY KEY,
@@ -292,11 +295,31 @@ export const db = {
     if (isConnectedToPostgres && pool) {
       let query = `
         SELECT r.*, 
-          COALESCE(json_agg(DISTINCT e.*) FILTER (WHERE e.id IS NOT NULL), '[]') as evidence,
-          COALESCE(json_agg(DISTINCT l.*) FILTER (WHERE l.id IS NOT NULL), '[]') as log
+          COALESCE((
+            SELECT json_agg(json_build_object(
+              'id', e.id, 
+              'name', e.name, 
+              'type', e.type, 
+              'size', e.size, 
+              'url', e.url
+            ))
+            FROM evidence e
+            WHERE e.report_id = r.id
+          ), '[]'::json) AS evidence,
+          COALESCE((
+            SELECT json_agg(json_build_object(
+              'id', l.id, 
+              'action', l.action, 
+              'from_status', l.from_status, 
+              'to_status', l.to_status, 
+              'note', l.note, 
+              'admin_email', l.admin_email, 
+              'timestamp', l.timestamp
+            ) ORDER BY l.timestamp DESC)
+            FROM decision_logs l
+            WHERE l.report_id = r.id
+          ), '[]'::json) AS log
         FROM reports r
-        LEFT JOIN evidence e ON r.id = e.report_id
-        LEFT JOIN decision_logs l ON r.id = l.report_id
         WHERE 1=1
       `;
       const params: any[] = [];
@@ -336,7 +359,7 @@ export const db = {
         pIndex++;
       }
 
-      query += ` GROUP BY r.id ORDER BY r.created_at DESC`;
+      query += ` ORDER BY r.created_at DESC`;
 
       const res = await pool.query(query, params);
       return res.rows.map((row) => ({
@@ -405,13 +428,32 @@ export const db = {
     if (isConnectedToPostgres && pool) {
       const query = `
         SELECT r.*, 
-          COALESCE(json_agg(DISTINCT e.*) FILTER (WHERE e.id IS NOT NULL), '[]') as evidence,
-          COALESCE(json_agg(DISTINCT l.*) FILTER (WHERE l.id IS NOT NULL), '[]') as log
+          COALESCE((
+            SELECT json_agg(json_build_object(
+              'id', e.id, 
+              'name', e.name, 
+              'type', e.type, 
+              'size', e.size, 
+              'url', e.url
+            ))
+            FROM evidence e
+            WHERE e.report_id = r.id
+          ), '[]'::json) AS evidence,
+          COALESCE((
+            SELECT json_agg(json_build_object(
+              'id', l.id, 
+              'action', l.action, 
+              'from_status', l.from_status, 
+              'to_status', l.to_status, 
+              'note', l.note, 
+              'admin_email', l.admin_email, 
+              'timestamp', l.timestamp
+            ) ORDER BY l.timestamp DESC)
+            FROM decision_logs l
+            WHERE l.report_id = r.id
+          ), '[]'::json) AS log
         FROM reports r
-        LEFT JOIN evidence e ON r.id = e.report_id
-        LEFT JOIN decision_logs l ON r.id = l.report_id
         WHERE r.id = $1
-        GROUP BY r.id
       `;
       const res = await pool.query(query, [id]);
       if (res.rows.length === 0) return null;

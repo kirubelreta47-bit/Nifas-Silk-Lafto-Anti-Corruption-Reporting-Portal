@@ -29,7 +29,7 @@ export const AdminLayout: React.FC = () => {
   }
 
   const currentUser = authService.getCurrentUser();
-  const stats = reportService.getReportStats();
+  const newReportsCount = reportService.getNewReportsCount();
 
   const handleLogout = () => {
     authService.logout();
@@ -47,7 +47,7 @@ export const AdminLayout: React.FC = () => {
       to: '/admin/reports',
       label: t('adminReports'),
       icon: FileSpreadsheet,
-      badge: stats.new > 0 ? stats.new : undefined,
+      badge: newReportsCount > 0 ? newReportsCount : undefined,
     },
     {
       to: '/admin/departments',

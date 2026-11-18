@@ -34,7 +34,22 @@ const getAuthHeaders = (): Record<string, string> => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+// Short-lived memory cache to prevent redundant network fetches across route changes
+let cachedReportsList: { data: Report[]; key: string; expiresAt: number } | null = null;
+let cachedDepartmentsList: { data: DepartmentDef[]; expiresAt: number } | null = null;
+const CACHE_TTL_MS = 15000; // 15 seconds
+
+export const clearApiCache = () => {
+  cachedReportsList = null;
+  cachedDepartmentsList = null;
+};
+
 export const apiClient = {
+  // Clear in-memory client cache
+  clearCache(): void {
+    clearApiCache();
+  },
+
   // 1. Health check
   async checkHealth(): Promise<{ status: string; database?: any; storage?: any } | null> {
     try {
@@ -58,6 +73,11 @@ export const apiClient = {
     if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
     if (filters.dateTo) params.append('dateTo', filters.dateTo);
 
+    const cacheKey = params.toString() || 'default';
+    if (cachedReportsList && cachedReportsList.key === cacheKey && Date.now() < cachedReportsList.expiresAt) {
+      return cachedReportsList.data;
+    }
+
     const url = `${API_BASE_URL}/reports?${params.toString()}`;
     const res = await fetch(url, {
       headers: {
@@ -66,6 +86,13 @@ export const apiClient = {
     });
     if (!res.ok) throw new Error(`Failed to fetch reports: ${res.statusText}`);
     const data = await res.json();
+
+    cachedReportsList = {
+      data: data.data,
+      key: cacheKey,
+      expiresAt: Date.now() + CACHE_TTL_MS,
+    };
+
     return data.data;
   },
 
@@ -84,6 +111,7 @@ export const apiClient = {
 
   // 4. Create Report (Citizen submission - no auth required)
   async submitReport(input: CreateReportInput): Promise<{ success: boolean; data?: Report; error?: string }> {
+    clearApiCache();
     const res = await fetch(`${API_BASE_URL}/reports`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -104,6 +132,7 @@ export const apiClient = {
     note?: string,
     adminEmail: string = 'admin@nsl.gov.et'
   ): Promise<Report | null> {
+    clearApiCache();
     const res = await fetch(`${API_BASE_URL}/reports/${id}/status`, {
       method: 'PATCH',
       headers: {
@@ -124,6 +153,7 @@ export const apiClient = {
     notes: string,
     adminEmail: string = 'admin@nsl.gov.et'
   ): Promise<Report | null> {
+    clearApiCache();
     const res = await fetch(`${API_BASE_URL}/reports/${id}/notes`, {
       method: 'PATCH',
       headers: {
@@ -140,6 +170,7 @@ export const apiClient = {
 
   // 7. Toggle Urgent (Requires Admin Auth)
   async toggleUrgent(id: string): Promise<Report | null> {
+    clearApiCache();
     const res = await fetch(`${API_BASE_URL}/reports/${id}/urgent`, {
       method: 'PATCH',
       headers: {
@@ -208,12 +239,16 @@ export const apiClient = {
 
   // 11. Department Management
   async getDepartments(): Promise<DepartmentDef[]> {
+    if (cachedDepartmentsList && Date.now() < cachedDepartmentsList.expiresAt) {
+      return cachedDepartmentsList.data;
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/departments`);
       if (!res.ok) return [];
       const json = await res.json();
       if (!json.success || !Array.isArray(json.data)) return [];
-      return json.data.map((d: any) => ({
+      const mapped = json.data.map((d: any) => ({
         id: d.id,
         code: d.code,
         am: d.nameAm || d.am,
@@ -223,6 +258,13 @@ export const apiClient = {
         isCustom: d.isCustom ?? false,
         createdAt: d.createdAt,
       }));
+
+      cachedDepartmentsList = {
+        data: mapped,
+        expiresAt: Date.now() + 30000,
+      };
+
+      return mapped;
     } catch {
       return [];
     }
@@ -235,6 +277,7 @@ export const apiClient = {
     descriptionAm?: string;
     descriptionEn?: string;
   }): Promise<{ success: boolean; data?: DepartmentDef; error?: string }> {
+    clearApiCache();
     try {
       const res = await fetch(`${API_BASE_URL}/departments`, {
         method: 'POST',
@@ -268,6 +311,7 @@ export const apiClient = {
   },
 
   async deleteDepartment(id: string): Promise<boolean> {
+    clearApiCache();
     try {
       const res = await fetch(`${API_BASE_URL}/departments/${encodeURIComponent(id)}`, {
         method: 'DELETE',

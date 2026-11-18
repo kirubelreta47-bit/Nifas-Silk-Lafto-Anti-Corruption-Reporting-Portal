@@ -7,6 +7,7 @@ import {
   DepartmentDef,
   getAllDepartments,
   saveCustomDepartment,
+  saveDepartmentsBatch,
   deleteCustomDepartment,
   matchReportToDepartment,
   STANDARD_DEPARTMENT_PRESETS,
@@ -55,9 +56,7 @@ export const DepartmentsPage: React.FC = () => {
     let isMounted = true;
     apiClient.getDepartments().then((remoteDepts) => {
       if (!isMounted || !remoteDepts || remoteDepts.length === 0) return;
-      remoteDepts.forEach((rd) => {
-        saveCustomDepartment(rd);
-      });
+      saveDepartmentsBatch(remoteDepts);
       setDepartments(getAllDepartments());
     });
 

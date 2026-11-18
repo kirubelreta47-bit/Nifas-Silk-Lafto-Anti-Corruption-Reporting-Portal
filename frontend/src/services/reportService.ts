@@ -452,16 +452,25 @@ export const INITIAL_SEED_REPORTS: Report[] = [
   },
 ];
 
+// In-memory cache to prevent repetitive JSON parse / localStorage reads
+let inMemoryCachedReports: Report[] | null = null;
+
 // Initialize storage with seed data if empty, and ensure urgent property is defined
 export const initializeReportsStorage = (): Report[] => {
+  if (inMemoryCachedReports !== null) {
+    return inMemoryCachedReports;
+  }
+
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
+      inMemoryCachedReports = INITIAL_SEED_REPORTS;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEED_REPORTS));
       return INITIAL_SEED_REPORTS;
     }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) {
+      inMemoryCachedReports = INITIAL_SEED_REPORTS;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEED_REPORTS));
       return INITIAL_SEED_REPORTS;
     }
@@ -478,8 +487,10 @@ export const initializeReportsStorage = (): Report[] => {
     if (needsResave) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
     }
+    inMemoryCachedReports = sanitized;
     return sanitized;
   } catch {
+    inMemoryCachedReports = INITIAL_SEED_REPORTS;
     return INITIAL_SEED_REPORTS;
   }
 };
@@ -569,6 +580,7 @@ export const reportService = {
     };
 
     reports[index] = updatedReport;
+    inMemoryCachedReports = reports;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
 
     // Sync urgent toggle to backend API
@@ -671,8 +683,10 @@ export const reportService = {
           ],
         };
 
+        const updatedList = [newReport, ...currentReports];
+        inMemoryCachedReports = updatedList;
         if (typeof localStorage !== 'undefined') {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify([newReport, ...currentReports]));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
           localStorage.setItem(RATE_LIMIT_KEY, String(now));
         }
         return { success: true, report: newReport };
@@ -712,6 +726,7 @@ export const reportService = {
     };
 
     reports[index] = updatedReport;
+    inMemoryCachedReports = reports;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
 
     return updatedReport;
@@ -749,6 +764,7 @@ export const reportService = {
     };
 
     reports[index] = updatedReport;
+    inMemoryCachedReports = reports;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
 
     // Sync status change to backend API
@@ -784,6 +800,7 @@ export const reportService = {
     };
 
     reports[index] = updatedReport;
+    inMemoryCachedReports = reports;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
 
     // Sync notes change to backend API
@@ -1000,7 +1017,13 @@ export const reportService = {
     };
   },
 
+  getNewReportsCount: (): number => {
+    const reports = initializeReportsStorage();
+    return reports.filter((r) => r.status === 'new').length;
+  },
+
   resetToSeedData: (): void => {
+    inMemoryCachedReports = INITIAL_SEED_REPORTS;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEED_REPORTS));
   },
 
@@ -1008,6 +1031,7 @@ export const reportService = {
     try {
       const serverReports = await apiClient.getReports();
       if (serverReports && serverReports.length > 0) {
+        inMemoryCachedReports = serverReports;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(serverReports));
         return true;
       }

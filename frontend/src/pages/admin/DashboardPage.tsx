@@ -77,13 +77,9 @@ export const DashboardPage: React.FC = () => {
   }, [selectedDeptId, departments]);
 
   const refreshData = (days: 7 | 30 | 90 = timeRange, deptId: string = selectedDeptId) => {
-    setLoading(true);
-    setTimeout(() => {
-      const officeParam = deptId === 'all' ? undefined : departments.find((d) => d.id === deptId)?.en;
-      setStats(reportService.getReportStats(days, officeParam));
-      setReports(reportService.getReports(officeParam ? { office: officeParam } : undefined));
-      setLoading(false);
-    }, 100);
+    const officeParam = deptId === 'all' ? undefined : departments.find((d) => d.id === deptId)?.en;
+    setStats(reportService.getReportStats(days, officeParam));
+    setReports(reportService.getReports(officeParam ? { office: officeParam } : undefined));
   };
 
   useEffect(() => {
