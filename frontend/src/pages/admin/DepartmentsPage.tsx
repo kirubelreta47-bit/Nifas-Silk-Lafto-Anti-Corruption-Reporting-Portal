@@ -9,6 +9,7 @@ import {
   saveCustomDepartment,
   deleteCustomDepartment,
   matchReportToDepartment,
+  STANDARD_DEPARTMENT_PRESETS,
 } from '../../constants/departments';
 import {
   Building2,
@@ -23,6 +24,7 @@ import {
   Sparkles,
   ExternalLink,
   ShieldAlert,
+  ChevronDown,
 } from 'lucide-react';
 
 export const DepartmentsPage: React.FC = () => {
@@ -35,6 +37,7 @@ export const DepartmentsPage: React.FC = () => {
   const [filterType, setFilterType] = useState<'all' | 'standard' | 'custom'>('all');
 
   // Form State
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [nameAm, setNameAm] = useState('');
   const [nameEn, setNameEn] = useState('');
   const [code, setCode] = useState('');
@@ -53,9 +56,7 @@ export const DepartmentsPage: React.FC = () => {
     apiClient.getDepartments().then((remoteDepts) => {
       if (!isMounted || !remoteDepts || remoteDepts.length === 0) return;
       remoteDepts.forEach((rd) => {
-        if (rd.isCustom) {
-          saveCustomDepartment(rd);
-        }
+        saveCustomDepartment(rd);
       });
       setDepartments(getAllDepartments());
     });
@@ -87,22 +88,37 @@ export const DepartmentsPage: React.FC = () => {
   // Auto-generate code when English name changes if not manually set
   const handleNameEnChange = (val: string) => {
     setNameEn(val);
-    const suggested = val
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 20);
-    setCode(suggested);
+    if (!selectedPresetId) {
+      const suggested = val
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 20);
+      setCode(suggested);
+    }
   };
 
-  // Quick fill preset templates
-  const handleApplyPreset = (am: string, en: string, c: string, descAm?: string, descEn?: string) => {
-    setNameAm(am);
-    setNameEn(en);
-    setCode(c);
-    setDescriptionAm(descAm || '');
-    setDescriptionEn(descEn || '');
+  // Preset Selection from Dropdown or Quick Pills
+  const handlePresetSelect = (presetId: string) => {
+    setSelectedPresetId(presetId);
     setFormError(null);
+    setFormSuccess(null);
+    if (!presetId) {
+      setNameAm('');
+      setNameEn('');
+      setCode('');
+      setDescriptionAm('');
+      setDescriptionEn('');
+      return;
+    }
+    const found = STANDARD_DEPARTMENT_PRESETS.find((p) => p.id === presetId);
+    if (found) {
+      setNameAm(found.am);
+      setNameEn(found.en);
+      setCode(found.code);
+      setDescriptionAm(found.descriptionAm || '');
+      setDescriptionEn(found.descriptionEn || '');
+    }
   };
 
   const handleCreateDepartment = async (e: React.FormEvent) => {
@@ -138,8 +154,8 @@ export const DepartmentsPage: React.FC = () => {
     if (duplicate) {
       setFormError(
         lang === 'am'
-          ? `ይህ የመሥሪያ ቤት መለያ (${cleanCode}) አስቀድሞ ተመዝግቧል። እባክዎ የተለየ ኮድ ይጠቀሙ።`
-          : `Department code (${cleanCode}) already exists. Please choose a different code.`
+          ? `ይህ የመሥሪያ ቤት መለያ (${cleanCode}) አስቀድሞ በፖርታሉ ላይ ነቅቷል!`
+          : `Department code (${cleanCode}) is already active in the portal!`
       );
       return;
     }
@@ -174,6 +190,7 @@ export const DepartmentsPage: React.FC = () => {
       }
 
       setDepartments(getAllDepartments());
+      setSelectedPresetId('');
       setNameAm('');
       setNameEn('');
       setCode('');
@@ -181,8 +198,8 @@ export const DepartmentsPage: React.FC = () => {
       setDescriptionEn('');
       setFormSuccess(
         lang === 'am'
-          ? `"${cleanAm}" መሥሪያ ቤት በተሳካ ሁኔታ ተፈጥሯል! አሁን በዳሽቦርድ፣ በQR ፖስተር እና በሪፖርቶች ላይ ሙሉ በሙሉ ይሰራል።`
-          : `Department "${cleanEn}" successfully created! It is now active on dashboard, QR poster generator, and all reports.`
+          ? `"${cleanAm}" መሥሪያ ቤት በተሳካ ሁኔታ ነቅቷል! አሁን በዳሽቦርድ፣ በQR ፖስተር እና በሪፖርቶች ላይ ሙሉ በሙሉ ይሰራል።`
+          : `Department "${cleanEn}" successfully activated! It is now live on dashboard, QR poster generator, and all reports.`
       );
     } catch (err: any) {
       setFormError(err.message || 'Failed to create department');
@@ -230,8 +247,8 @@ export const DepartmentsPage: React.FC = () => {
     });
   }, [departments, filterType, searchQuery]);
 
-  const customCount = useMemo(() => departments.filter((d) => d.isCustom).length, [departments]);
-  const standardCount = useMemo(() => departments.filter((d) => !d.isCustom).length, [departments]);
+  const activeCount = departments.length;
+  const presetsCount = STANDARD_DEPARTMENT_PRESETS.length;
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-12 max-w-7xl mx-auto">
@@ -248,23 +265,23 @@ export const DepartmentsPage: React.FC = () => {
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
               {lang === 'am'
-                ? 'አዲስ መሥሪያ ቤቶችን፣ ኤጀንሲዎችን ወይም የወረዳ ጽ/ቤቶችን እዚህ ይፍጠሩ። የተፈጠሩት መሥሪያ ቤቶች ወዲያውኑ በዜጎች QR ፖስተር መፍጠሪያ፣ በዳሽቦርድ ስታቲስቲክስ እና በሪፖርቶች መከታተያ ላይ ይካተታሉ።'
-                : 'Create and configure municipal offices, agencies, or woreda desks. Newly created departments instantly become active across citizen QR posters, dashboard charts, case routing, and report filters.'}
+                ? 'አዲስ መሥሪያ ቤቶችን፣ ኤጀንሲዎችን ወይም የወረዳ ጽ/ቤቶችን እዚህ ይፍጠሩ ወይም ከመደበኛ ዝርዝር ይምረጡ። የተመረጡት መሥሪያ ቤቶች ወዲያውኑ በዜጎች QR ፖስተር መፍጠሪያ፣ በዳሽቦርድ ስታቲስቲክስ እና በሪፖርቶች መከታተያ ላይ ይካተታሉ።'
+                : 'Create and configure municipal offices, agencies, or woreda desks. Activated departments instantly become available across citizen QR posters, dashboard charts, case routing, and report filters.'}
             </p>
           </div>
 
           {/* Quick Metrics */}
           <div className="grid grid-cols-3 gap-3 shrink-0">
             <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-2xl border border-white/10 text-center">
-              <span className="block text-xl sm:text-2xl font-black text-white">{departments.length}</span>
+              <span className="block text-xl sm:text-2xl font-black text-[#F5B700]">{activeCount}</span>
               <span className="text-[10px] sm:text-xs text-slate-300 font-semibold">
-                {lang === 'am' ? 'ጠቅላላ' : 'Total'}
+                {lang === 'am' ? 'የነቁ መሥሪያ ቤቶች' : 'Active Bureaus'}
               </span>
             </div>
             <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-2xl border border-white/10 text-center">
-              <span className="block text-xl sm:text-2xl font-black text-[#F5B700]">{customCount}</span>
+              <span className="block text-xl sm:text-2xl font-black text-white">{presetsCount}</span>
               <span className="text-[10px] sm:text-xs text-slate-300 font-semibold">
-                {lang === 'am' ? 'አዲስ የተፈጠሩ' : 'Admin Created'}
+                {lang === 'am' ? 'መደበኛ አማራጮች' : 'Presets in Dropdown'}
               </span>
             </div>
             <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-2xl border border-white/10 text-center">
@@ -286,67 +303,14 @@ export const DepartmentsPage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-[#0B1F3A]">
-                {lang === 'am' ? 'አዲስ መሥሪያ ቤት መፍጠሪያ' : 'Register New Department / Bureau'}
+                {lang === 'am' ? 'መሥሪያ ቤት መፍጠሪያና ማግበሪያ' : 'Activate or Create Department'}
               </h2>
               <p className="text-xs text-slate-500">
                 {lang === 'am'
-                  ? 'የመሥሪያ ቤቱን ስም በአማርኛ እና በእንግሊዝኛ በማስገባት አዲስ መሥሪያ ቤት ይመዝግቡ'
-                  : 'Enter the department names to activate it portal-wide'}
+                  ? 'ከመደበኛ መሥሪያ ቤቶች ይምረጡ ወይም አዲስ ብጁ መሥሪያ ቤት ይመዝግቡ'
+                  : 'Choose standard municipal bureaus or register new offices to activate them portal-wide'}
               </p>
             </div>
-          </div>
-
-          {/* Quick presets */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
-            <span className="text-[11px] font-semibold text-slate-400 mr-1 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#F5B700]" />
-              {lang === 'am' ? 'አብነቶች፡' : 'Presets:'}
-            </span>
-            <button
-              type="button"
-              onClick={() =>
-                handleApplyPreset(
-                  'የውሃና ፍሳሽ ኤጀንሲ',
-                  'Water & Sewerage Agency',
-                  'water-sewerage',
-                  'የውሃ አቅርቦትና ፍሳሽ መስመሮች ጥገና ጽ/ቤት',
-                  'Municipal drinking water and drainage infrastructure'
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors cursor-pointer text-[11px]"
-            >
-              {lang === 'am' ? 'የውሃና ፍሳሽ' : 'Water Agency'}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleApplyPreset(
-                  'የገቢዎችና ጉምሩክ ቅርንጫፍ ጽ/ቤት',
-                  'Revenues & Customs Branch',
-                  'revenues-customs',
-                  'የግብርና ቀረጥ አሰባሰብ እና የታክስ ቁጥጥር',
-                  'Tax collection, audits, and tariff assessments'
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors cursor-pointer text-[11px]"
-            >
-              {lang === 'am' ? 'ገቢዎችና ጉምሩክ' : 'Revenues'}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleApplyPreset(
-                  'የጤና ጣቢያዎችና ክሊኒኮች አስተዳደር',
-                  'Health Centers & Clinics Bureau',
-                  'health-clinics',
-                  'የሕዝብ ጤና አገልግሎት እና የመድኃኒት አቅርቦት',
-                  'Public primary healthcare and dispensary oversight'
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors cursor-pointer text-[11px]"
-            >
-              {lang === 'am' ? 'የጤና ጣቢያዎች' : 'Health Bureau'}
-            </button>
           </div>
         </div>
 
@@ -365,7 +329,86 @@ export const DepartmentsPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleCreateDepartment} className="space-y-5">
+        <form onSubmit={handleCreateDepartment} className="space-y-6">
+          {/* Dropdown to Choose Existing Standard Departments or Custom */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+              <label htmlFor="preset-dept-dropdown" className="text-xs sm:text-sm font-extrabold text-[#0B1F3A] flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#F5B700]" />
+                <span>
+                  {lang === 'am'
+                    ? 'ከመደበኛ መሥሪያ ቤቶች ይምረጡ ወይም አዲስ ብጁ ያዘጋጁ'
+                    : 'Choose Standard Department or Create Custom Bureau'}
+                </span>
+              </label>
+              <span className="text-[11px] text-slate-500 font-semibold">
+                {lang === 'am'
+                  ? 'ከዝርዝሩ ሲመርጡ መረጃው በራስ-ሰር ይሞላል'
+                  : 'Auto-populates fields upon selection'}
+              </span>
+            </div>
+
+            <div className="relative">
+              <select
+                id="preset-dept-dropdown"
+                value={selectedPresetId}
+                onChange={(e) => handlePresetSelect(e.target.value)}
+                className="w-full pl-3.5 pr-10 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 font-bold text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F3A] cursor-pointer shadow-xs appearance-none"
+              >
+                <option value="">
+                  {lang === 'am'
+                    ? '-- አዲስ ብጁ መሥሪያ ቤት ይፍጠሩ (Create Custom Department) --'
+                    : '-- Create Custom Department (Type Below) --'}
+                </option>
+                {STANDARD_DEPARTMENT_PRESETS.map((preset) => {
+                  const isAlreadyActive = departments.some(
+                    (d) => d.id === preset.id || d.code === preset.code
+                  );
+                  const label = lang === 'am' ? preset.am : preset.en;
+                  return (
+                    <option key={preset.id} value={preset.id}>
+                      {`🏛️ ${label} [${preset.code.toUpperCase()}]${
+                        isAlreadyActive
+                          ? lang === 'am'
+                            ? ' — (አስቀድሞ ነቅቷል)'
+                            : ' — (Already Active)'
+                          : ''
+                      }`}
+                    </option>
+                  );
+                })}
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            {/* Quick Presets Shortcut Badges */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs text-slate-500">
+              <span className="text-[11px] font-semibold text-slate-400 mr-1 flex items-center gap-1">
+                {lang === 'am' ? 'ፈጣን ምርጫ፡' : 'Quick select:'}
+              </span>
+              {STANDARD_DEPARTMENT_PRESETS.slice(0, 6).map((preset) => {
+                const isSelected = selectedPresetId === preset.id;
+                const isAlreadyActive = departments.some((d) => d.id === preset.id);
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => handlePresetSelect(preset.id)}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer text-[11px] border ${
+                      isSelected
+                        ? 'bg-[#0B1F3A] text-white border-[#0B1F3A]'
+                        : isAlreadyActive
+                        ? 'bg-slate-100 text-slate-400 border-slate-200 line-through'
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    {lang === 'am' ? preset.am.split(' ')[0] : preset.code.toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Amharic Name */}
             <div className="space-y-1.5">
@@ -378,7 +421,7 @@ export const DepartmentsPage: React.FC = () => {
                 type="text"
                 value={nameAm}
                 onChange={(e) => setNameAm(e.target.value)}
-                placeholder="ለምሳሌ፡ የውሃና ፍሳሽ ኤጀንሲ ወይም ወረዳ 05 ንግድ ጽ/ቤት"
+                placeholder="ለምሳሌ፡ የመሬት ልማትና አስተዳደር ወይም ወረዳ 05 ንግድ ጽ/ቤት"
                 required
                 className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-[#F8FAFC] focus:bg-white text-slate-900 font-medium text-sm focus:outline-none focus:border-[#0B1F3A] focus:ring-2 focus:ring-[#F5B700] transition-colors"
               />
@@ -395,7 +438,7 @@ export const DepartmentsPage: React.FC = () => {
                 type="text"
                 value={nameEn}
                 onChange={(e) => handleNameEnChange(e.target.value)}
-                placeholder="e.g. Water & Sewerage Agency or Woreda 05 Trade"
+                placeholder="e.g. Land Administration or Trade Bureau"
                 required
                 className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-[#F8FAFC] focus:bg-white text-slate-900 font-medium text-sm focus:outline-none focus:border-[#0B1F3A] focus:ring-2 focus:ring-[#F5B700] transition-colors"
               />
@@ -417,7 +460,7 @@ export const DepartmentsPage: React.FC = () => {
                   type="text"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  placeholder="water-agency"
+                  placeholder="land"
                   className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-300 bg-[#F8FAFC] focus:bg-white text-slate-900 font-mono font-medium text-sm focus:outline-none focus:border-[#0B1F3A] focus:ring-2 focus:ring-[#F5B700] transition-colors"
                 />
               </div>
@@ -482,176 +525,147 @@ export const DepartmentsPage: React.FC = () => {
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-[#0B1F3A] flex items-center gap-2">
               <Building2 className="w-5 h-5 text-blue-900" />
-              <span>{lang === 'am' ? 'የመሥሪያ ቤቶች ማውጫ' : 'Active Department Directory'}</span>
+              <span>{lang === 'am' ? 'የነቁ መሥሪያ ቤቶች ማውጫ' : 'Active Department Directory'}</span>
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold">
                 {filteredDepartments.length}
               </span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {lang === 'am'
-                ? 'በፖርታሉ ላይ የሚገኙ ሁሉም መሥሪያ ቤቶች። ከእያንዳንዱ መሥሪያ ቤት ጎን የQR ኮድ ማመንጨት ወይም ሊንክ መቅዳት ይችላሉ።'
-                : 'All configured bureaus. Use quick actions to launch QR code poster or copy citizen reporting links.'}
+                ? 'በፖርታሉ ላይ የነቁ እና በዳሽቦርድ እንዲሁም በሪፖርቶች ላይ የሚታዩ መሥሪያ ቤቶች።'
+                : 'All currently activated bureaus visible across the portal, dashboard, and reports.'}
             </p>
           </div>
 
-          {/* Search & Filter Controls */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Filter Tabs */}
-            <div className="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => setFilterType('all')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  filterType === 'all'
-                    ? 'bg-white text-[#0B1F3A] shadow-xs font-bold'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {lang === 'am' ? 'ሁሉም' : 'All'} ({departments.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterType('standard')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  filterType === 'standard'
-                    ? 'bg-white text-[#0B1F3A] shadow-xs font-bold'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {lang === 'am' ? 'መደበኛ' : 'Standard'} ({standardCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterType('custom')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  filterType === 'custom'
-                    ? 'bg-white text-[#0B1F3A] shadow-xs font-bold'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {lang === 'am' ? 'አዲስ የተጨመሩ' : 'Admin Created'} ({customCount})
-              </button>
-            </div>
-
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={lang === 'am' ? 'መሥሪያ ቤት ፈልግ...' : 'Search bureau...'}
-                className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-300 text-xs font-medium bg-[#F8FAFC] focus:bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0B1F3A]"
-              />
-            </div>
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={lang === 'am' ? 'መሥሪያ ቤት ፈልግ...' : 'Search bureau...'}
+              className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-300 text-xs font-medium bg-[#F8FAFC] focus:bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0B1F3A]"
+            />
           </div>
         </div>
 
-        {/* Directory Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDepartments.map((dept) => {
-            const count = reportCountsByDept[dept.id] || 0;
-            const isCustom = dept.isCustom;
+        {/* Directory Grid or Empty State */}
+        {filteredDepartments.length === 0 ? (
+          <div className="py-12 px-4 text-center rounded-2xl bg-slate-50 border border-slate-200 border-dashed space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-200 flex items-center justify-center mx-auto text-slate-600">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-[#0B1F3A]">
+              {departments.length === 0
+                ? lang === 'am'
+                  ? 'ምንም የነቁ መሥሪያ ቤቶች የሉም'
+                  : 'No Active Departments Yet'
+                : lang === 'am'
+                ? 'ምንም የተገኘ መሥሪያ ቤት የለም'
+                : 'No Departments Found'}
+            </h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              {departments.length === 0
+                ? lang === 'am'
+                  ? 'ከላይ ካለው ተቆልቋይ ሳጥን መደበኛ መሥሪያ ቤቶችን በመምረጥ ወይም አዲስ ብጁ በመመዝገብ መሥሪያ ቤቶችን ያንቁ።'
+                  : 'Select a standard bureau from the dropdown above or enter custom details to activate it across the portal.'
+                : lang === 'am'
+                ? 'ከፍለጋዎ ጋር የሚዛመድ መሥሪያ ቤት አልተገኘም።'
+                : 'No departments match your search query.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredDepartments.map((dept) => {
+              const count = reportCountsByDept[dept.id] || 0;
 
-            return (
-              <div
-                key={dept.id}
-                className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between space-y-4 group"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <span
-                      className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                        isCustom
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                          : 'bg-blue-100 text-blue-900 border border-blue-200'
-                      }`}
-                    >
-                      {isCustom
-                        ? lang === 'am'
-                          ? 'አዲስ የተፈጠረ'
-                          : 'Admin Created'
-                        : lang === 'am'
-                        ? 'መደበኛ ቢሮ'
-                        : 'Standard Bureau'}
-                    </span>
+              return (
+                <div
+                  key={dept.id}
+                  className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between space-y-4 group"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300">
+                        {lang === 'am' ? 'ገባሪ መሥሪያ ቤት' : 'Active Bureau'}
+                      </span>
 
-                    <span className="font-mono text-[11px] text-slate-400 font-semibold">
-                      #{dept.code || dept.id}
-                    </span>
-                  </div>
+                      <span className="font-mono text-[11px] text-slate-400 font-semibold">
+                        #{dept.code || dept.id}
+                      </span>
+                    </div>
 
-                  <h3 className="font-extrabold text-[#0B1F3A] text-sm sm:text-base leading-snug">
-                    {lang === 'am' ? dept.am : dept.en}
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                    {lang === 'am' ? dept.en : dept.am}
-                  </p>
-
-                  {(dept.descriptionAm || dept.descriptionEn) && (
-                    <p className="text-[11px] text-slate-400 line-clamp-2 pt-1">
-                      {lang === 'am'
-                        ? dept.descriptionAm || dept.descriptionEn
-                        : dept.descriptionEn || dept.descriptionAm}
+                    <h3 className="font-extrabold text-[#0B1F3A] text-sm sm:text-base leading-snug">
+                      {lang === 'am' ? dept.am : dept.en}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                      {lang === 'am' ? dept.en : dept.am}
                     </p>
-                  )}
-                </div>
 
-                <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-slate-700">{count}</span>
-                    <span className="text-[11px] text-slate-400">
-                      {lang === 'am' ? 'ጥቆማዎች' : 'reports'}
-                    </span>
+                    {(dept.descriptionAm || dept.descriptionEn) && (
+                      <p className="text-[11px] text-slate-400 line-clamp-2 pt-1">
+                        {lang === 'am'
+                          ? dept.descriptionAm || dept.descriptionEn
+                          : dept.descriptionEn || dept.descriptionAm}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    {/* Copy Link Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleCopyLink(dept.id)}
-                      title={lang === 'am' ? 'የዜጋ መመዝገቢያ ሊንክ ቅዳ' : 'Copy citizen form link'}
-                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#0B1F3A] hover:border-slate-300 transition-colors cursor-pointer text-xs flex items-center gap-1 font-semibold"
-                    >
-                      {copiedId === dept.id ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span className="text-emerald-700 text-[10px]">{lang === 'am' ? 'ተቀድቷል' : 'Copied'}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                        </>
-                      )}
-                    </button>
+                  <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-slate-700">{count}</span>
+                      <span className="text-[11px] text-slate-400">
+                        {lang === 'am' ? 'ጥቆማዎች' : 'reports'}
+                      </span>
+                    </div>
 
-                    {/* QR Code Action */}
-                    <Link
-                      to={`/admin/qr?dept=${encodeURIComponent(dept.id)}`}
-                      title={lang === 'am' ? 'የዚህ መሥሪያ ቤት QR ኮድ አዘጋጅ' : 'Generate QR poster for this bureau'}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#0B1F3A] hover:bg-[#122b4d] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-                    >
-                      <QrCode className="w-3.5 h-3.5 text-[#F5B700]" />
-                      <span>{lang === 'am' ? 'QR ኮድ' : 'QR'}</span>
-                    </Link>
+                    <div className="flex items-center gap-1.5">
+                      {/* Copy Link Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleCopyLink(dept.id)}
+                        title={lang === 'am' ? 'የዜጋ መመዝገቢያ ሊንክ ቅዳ' : 'Copy citizen form link'}
+                        className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#0B1F3A] hover:border-slate-300 transition-colors cursor-pointer text-xs flex items-center gap-1 font-semibold"
+                      >
+                        {copiedId === dept.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="text-emerald-700 text-[10px]">{lang === 'am' ? 'ተቀድቷል' : 'Copied'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                          </>
+                        )}
+                      </button>
 
-                    {/* Delete Custom Department */}
-                    {isCustom && (
+                      {/* QR Code Action */}
+                      <Link
+                        to={`/admin/qr?dept=${encodeURIComponent(dept.id)}`}
+                        title={lang === 'am' ? 'የዚህ መሥሪያ ቤት QR ኮድ አዘጋጅ' : 'Generate QR poster for this bureau'}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#0B1F3A] hover:bg-[#122b4d] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-[#F5B700]" />
+                        <span>{lang === 'am' ? 'QR ኮድ' : 'QR'}</span>
+                      </Link>
+
+                      {/* Delete Department */}
                       <button
                         type="button"
                         onClick={() => handleDelete(dept.id, lang === 'am' ? dept.am : dept.en)}
-                        title={lang === 'am' ? 'መሥሪያ ቤቱን ሰርዝ' : 'Delete custom department'}
+                        title={lang === 'am' ? 'መሥሪያ ቤቱን ሰርዝ' : 'Delete department'}
                         className="p-2 rounded-xl bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

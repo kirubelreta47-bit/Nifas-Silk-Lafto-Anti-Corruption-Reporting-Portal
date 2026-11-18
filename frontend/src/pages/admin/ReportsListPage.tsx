@@ -494,6 +494,29 @@ export const ReportsListPage: React.FC = () => {
 
       {/* 3. GROUPED BY DEPARTMENT VIEW (KEY USER REQUIREMENT) */}
       {viewMode === 'grouped' ? (
+        departments.length === 0 ? (
+          <div className="bg-white p-8 rounded-3xl border border-slate-200 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#E8EEF7] flex items-center justify-center mx-auto text-[#0B1F3A]">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-[#0B1F3A]">
+              {lang === 'am' ? 'ምንም የነቁ መሥሪያ ቤቶች አልተመዘገቡም' : 'No Active Departments Yet'}
+            </h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              {lang === 'am'
+                ? 'ጥቆማዎችን በመሥሪያ ቤት ከፋፍሎ ለመመልከት፣ መጀመሪያ ወደ መሥሪያ ቤቶች መፍጠሪያ በመሄድ መሥሪያ ቤቶችን ያንቁ።'
+                : 'To view reports organized by department, please activate or create departments first.'}
+            </p>
+            <div className="pt-2">
+              <Link
+                to="/admin/departments"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-[#0B1F3A] hover:bg-[#122b4d] text-white shadow-xs"
+              >
+                <span>{lang === 'am' ? 'መሥሪያ ቤቶችን ይፍጠሩ/ያንቁ' : 'Activate Departments'}</span>
+              </Link>
+            </div>
+          </div>
+        ) : (
         <div className="space-y-6">
           {groupedDepartmentReports.map(({ department, reports, total, newCount }) => {
             return (
@@ -597,6 +620,7 @@ export const ReportsListPage: React.FC = () => {
             );
           })}
         </div>
+        )
       ) : (
         /* 4. CLASSIC TABLE VIEW */
         <div className="bg-white rounded-3xl border border-[#E8EEF7] shadow-sm overflow-hidden">

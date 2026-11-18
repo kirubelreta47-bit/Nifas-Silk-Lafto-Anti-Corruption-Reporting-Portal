@@ -31,6 +31,7 @@ import {
   ChevronRight,
   ChevronDown,
   Sparkles,
+  Plus,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -376,6 +377,16 @@ export const DashboardPage: React.FC = () => {
               </button>
             );
           })}
+
+          {(!stats.departmentBreakdown || stats.departmentBreakdown.length === 0) && (
+            <Link
+              to="/admin/departments"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 border border-blue-200"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{lang === 'am' ? '+ መሥሪያ ቤቶችን ይምረጡ/ያንቁ' : '+ Activate departments'}</span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -468,7 +479,7 @@ export const DashboardPage: React.FC = () => {
       </section>
 
       {/* 3. PROMINENT DEPARTMENT HEATMAP & COMPARISON SECTION (KEY USER REQUIREMENT) */}
-      {selectedDeptId === 'all' && stats.departmentBreakdown && (
+      {selectedDeptId === 'all' && stats.departmentBreakdown && stats.departmentBreakdown.length > 0 && (
         <section aria-label="Department Ranking and Heatmap" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Spotlighting #1 Most Reported Office */}
@@ -622,6 +633,31 @@ export const DashboardPage: React.FC = () => {
                 <span className="text-blue-700 font-bold">{stats.departmentBreakdown.length} Bureaus Ranked</span>
               </div>
             </div>
+          </div>
+        </section>
+      )}
+
+      {selectedDeptId === 'all' && (!stats.departmentBreakdown || stats.departmentBreakdown.length === 0) && (
+        <section aria-label="Department Activation Prompt" className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 text-center space-y-3 shadow-xs">
+          <div className="w-12 h-12 rounded-2xl bg-[#E8EEF7] flex items-center justify-center mx-auto text-[#0B1F3A]">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <h3 className="text-base sm:text-lg font-bold text-[#0B1F3A]">
+            {lang === 'am' ? 'ምንም የነቁ መሥሪያ ቤቶች አልተመዘገቡም' : 'No Departments Activated Yet'}
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
+            {lang === 'am'
+              ? 'መሥሪያ ቤቶችን በዳሽቦርድ ሰንጠረዥና የደረጃ ሰሌዳ ላይ ለማየት፣ ከመደበኛ ዝርዝር መሥሪያ ቤት ይምረጡ ወይም አዲስ ብጁ መሥሪያ ቤት ይፍጠሩ።'
+              : 'To view department analytics and ranking breakdowns, choose standard government bureaus or create custom departments.'}
+          </p>
+          <div className="pt-2">
+            <Link
+              to="/admin/departments"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-[#0B1F3A] hover:bg-[#122b4d] text-white transition-all shadow-xs"
+            >
+              <Plus className="w-4 h-4 text-[#F5B700]" />
+              <span>{lang === 'am' ? 'መሥሪያ ቤት ይምረጡ ወይም ይፍጠሩ' : 'Choose or Create Departments'}</span>
+            </Link>
           </div>
         </section>
       )}

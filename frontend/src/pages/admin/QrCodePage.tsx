@@ -1,5 +1,5 @@
 import React, { useRef, useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { useLanguage } from '../../context/LanguageContext';
 import { COMMON_DEPARTMENTS, getAllDepartments, DepartmentDef } from '../../constants/departments';
@@ -49,16 +49,32 @@ export const QrCodePage: React.FC = () => {
   }, []);
 
   // Department Selection state (can be pre-selected via ?dept= query param)
-  const initialDept = searchParams.get('dept') || 'land-admin';
+  const initialDept = searchParams.get('dept');
   const [selectedDeptId, setSelectedDeptId] = useState<string>(() => {
     const current = getAllDepartments();
-    return current.some((d) => d.id === initialDept) ? initialDept : current[0]?.id || 'land-admin';
+    if (initialDept && current.some((d) => d.id === initialDept)) return initialDept;
+    return current[0]?.id || '';
   });
   const [copied, setCopied] = useState<boolean>(false);
 
+  useEffect(() => {
+    if (departments.length > 0 && (!selectedDeptId || !departments.some((d) => d.id === selectedDeptId))) {
+      setSelectedDeptId(departments[0].id);
+    }
+  }, [departments, selectedDeptId]);
+
   // Active department resolution
   const activeDept = useMemo<DepartmentDef>(() => {
-    return departments.find((d) => d.id === selectedDeptId) || departments[0] || COMMON_DEPARTMENTS[0];
+    return (
+      departments.find((d) => d.id === selectedDeptId) ||
+      departments[0] || {
+        id: 'office',
+        code: 'office',
+        am: 'የክፍለ ከተማው ዋና ጽሕፈት ቤት',
+        en: 'Sub-City Central Office',
+        isCustom: false,
+      }
+    );
   }, [selectedDeptId, departments]);
 
   // Compute final QR target destination URL with department parameter
@@ -233,123 +249,147 @@ export const QrCodePage: React.FC = () => {
         </button>
       </div>
 
-      {/* Main Clean Card (Simple & Easy Looking) */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 text-center">
-        {/* 1. Department Dropdown */}
-        <div className="text-left space-y-1.5 no-print">
-          <label
-            htmlFor="qr-dept-dropdown"
-            className="block text-xs font-bold text-slate-700 flex items-center gap-2"
-          >
-            <Building2 className="w-4 h-4 text-[#F5B700]" />
-            <span>{t('selectDeptLabel')}</span>
-          </label>
-          <div className="relative">
-            <select
-              id="qr-dept-dropdown"
-              value={selectedDeptId}
-              onChange={(e) => setSelectedDeptId(e.target.value)}
-              className="w-full pl-4 pr-10 py-3 rounded-2xl border border-slate-300 text-sm sm:text-base font-bold bg-[#F8FAFC] text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B1F3A] focus:border-[#0B1F3A] cursor-pointer appearance-none shadow-xs transition-colors"
-            >
-              {departments.map((dept) => {
-                const label = lang === 'am' ? dept.am : dept.en;
-                const customTag = dept.isCustom ? (lang === 'am' ? ' [አዲስ]' : ' [Custom]') : '';
-                return (
-                  <option key={dept.id} value={dept.id}>
-                    {`[${dept.code.toUpperCase()}] ${label}${customTag}`}
-                  </option>
-                );
-              })}
-            </select>
-            <ChevronDown className="w-5 h-5 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+      {/* Main Clean Card (Simple & Easy Looking) or Empty State */}
+      {departments.length === 0 ? (
+        <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+          <div className="w-16 h-16 rounded-3xl bg-[#E8EEF7] flex items-center justify-center mx-auto text-[#0B1F3A]">
+            <Building2 className="w-8 h-8" />
           </div>
-        </div>
-
-        {/* 2. Department Badge & Title */}
-        <div className="space-y-1 pt-1 border-t border-slate-100">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8EEF7] border border-blue-200 text-[#0B1F3A] text-xs font-mono font-extrabold mt-3">
-            <Building2 className="w-3.5 h-3.5 text-[#0B1F3A]" />
-            <span>{activeDept.code.toUpperCase()}</span>
-          </div>
-          <h2 className="text-lg sm:text-xl font-black text-[#0B1F3A]">
-            {lang === 'am' ? activeDept.am : activeDept.en}
+          <h2 className="text-lg sm:text-xl font-extrabold text-[#0B1F3A]">
+            {lang === 'am' ? 'ምንም የነቁ መሥሪያ ቤቶች የሉም' : 'No Active Departments Yet'}
           </h2>
-          <p className="text-xs text-slate-500 font-medium">
-            {lang === 'am' ? activeDept.en : activeDept.am}
+          <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+            {lang === 'am'
+              ? 'የQR ኮድ ፖስተር ለማመንጨት እባክዎ መጀመሪያ ወደ መሥሪያ ቤቶች መፍጠሪያ በመሄድ ከመደበኛ ዝርዝር ይምረጡ ወይም አዲስ መሥሪያ ቤት ያንቁ።'
+              : 'To generate official QR code posters, please first select standard bureaus or create departments in the department manager.'}
           </p>
+          <div className="pt-2">
+            <Link
+              to="/admin/departments"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#0B1F3A] hover:bg-[#122b4d] text-white transition-all shadow-xs"
+            >
+              <span>{lang === 'am' ? 'ወደ መሥሪያ ቤቶች መፍጠሪያ ሂድ' : 'Go to Create Departments'}</span>
+            </Link>
+          </div>
         </div>
-
-        {/* 3. Centered QR Code */}
-        <div className="flex flex-col items-center justify-center space-y-3">
-          <div
-            ref={svgContainerRef}
-            className="p-5 rounded-3xl bg-[#F8FAFC] border-2 border-slate-200 shadow-xs inline-block"
-          >
-            <QRCodeSVG
-              value={computedQrUrl}
-              size={220}
-              level="H"
-              includeMargin={true}
-              className="rounded-xl shadow-xs"
-            />
+      ) : (
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 text-center">
+          {/* 1. Department Dropdown */}
+          <div className="text-left space-y-1.5 no-print">
+            <label
+              htmlFor="qr-dept-dropdown"
+              className="block text-xs font-bold text-slate-700 flex items-center gap-2"
+            >
+              <Building2 className="w-4 h-4 text-[#F5B700]" />
+              <span>{t('selectDeptLabel')}</span>
+            </label>
+            <div className="relative">
+              <select
+                id="qr-dept-dropdown"
+                value={selectedDeptId}
+                onChange={(e) => setSelectedDeptId(e.target.value)}
+                className="w-full pl-4 pr-10 py-3 rounded-2xl border border-slate-300 text-sm sm:text-base font-bold bg-[#F8FAFC] text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B1F3A] focus:border-[#0B1F3A] cursor-pointer appearance-none shadow-xs transition-colors"
+              >
+                {departments.map((dept) => {
+                  const label = lang === 'am' ? dept.am : dept.en;
+                  const customTag = dept.isCustom ? (lang === 'am' ? ' [አዲስ]' : ' [Custom]') : '';
+                  return (
+                    <option key={dept.id} value={dept.id}>
+                      {`[${dept.code.toUpperCase()}] ${label}${customTag}`}
+                    </option>
+                  );
+                })}
+              </select>
+              <ChevronDown className="w-5 h-5 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
 
-          {/* Quick Copy Link */}
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="no-print inline-flex items-center gap-1.5 text-xs font-mono text-slate-600 hover:text-[#0B1F3A] bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors cursor-pointer"
-            title="Click to copy link"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700 font-bold">
-                  {lang === 'am' ? 'ተገልብጧል!' : 'Copied!'}
-                </span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5 text-slate-500" />
-                <span className="truncate max-w-[280px]">{computedQrUrl}</span>
-              </>
-            )}
-          </button>
+          {/* 2. Department Badge & Title */}
+          <div className="space-y-1 pt-1 border-t border-slate-100">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8EEF7] border border-blue-200 text-[#0B1F3A] text-xs font-mono font-extrabold mt-3">
+              <Building2 className="w-3.5 h-3.5 text-[#0B1F3A]" />
+              <span>{activeDept.code.toUpperCase()}</span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-black text-[#0B1F3A]">
+              {lang === 'am' ? activeDept.am : activeDept.en}
+            </h2>
+            <p className="text-xs text-slate-500 font-medium">
+              {lang === 'am' ? activeDept.en : activeDept.am}
+            </p>
+          </div>
+
+          {/* 3. Centered QR Code */}
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <div
+              ref={svgContainerRef}
+              className="p-5 rounded-3xl bg-[#F8FAFC] border-2 border-slate-200 shadow-xs inline-block"
+            >
+              <QRCodeSVG
+                value={computedQrUrl}
+                size={220}
+                level="H"
+                includeMargin={true}
+                className="rounded-xl shadow-xs"
+              />
+            </div>
+
+            {/* Quick Copy Link */}
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="no-print inline-flex items-center gap-1.5 text-xs font-mono text-slate-600 hover:text-[#0B1F3A] bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors cursor-pointer"
+              title="Click to copy link"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-emerald-700 font-bold">
+                    {lang === 'am' ? 'ተገልብጧል!' : 'Copied!'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="truncate max-w-[280px]">{computedQrUrl}</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* 4. Download File Buttons */}
+          <div className="no-print pt-2 flex flex-wrap items-center justify-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleDownloadQrOnlyPng}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 text-[#0B1F3A] border border-slate-300 transition-all cursor-pointer shadow-xs"
+              title={t('downloadQrOnlyPng')}
+            >
+              <Download className="w-4 h-4 text-[#0B1F3A]" />
+              <span>{t('downloadQrOnlyPng')}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownloadQrOnlySvg}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 text-[#0B1F3A] border border-slate-300 transition-all cursor-pointer shadow-xs"
+              title={t('downloadQrOnlySvg')}
+            >
+              <FileDown className="w-4 h-4 text-emerald-700" />
+              <span>{t('downloadQrOnlySvg')}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownloadPosterPng}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-[#F5B700] hover:bg-[#e0a700] text-[#0B1F3A] shadow-xs transition-all cursor-pointer"
+              title={t('downloadQrPng')}
+            >
+              <Download className="w-4 h-4" />
+              <span>{t('downloadQrPng')} (Poster)</span>
+            </button>
+          </div>
         </div>
-
-        {/* 4. Download File Buttons */}
-        <div className="no-print pt-2 flex flex-wrap items-center justify-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleDownloadQrOnlyPng}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 text-[#0B1F3A] border border-slate-300 transition-all cursor-pointer shadow-xs"
-            title={t('downloadQrOnlyPng')}
-          >
-            <Download className="w-4 h-4 text-[#0B1F3A]" />
-            <span>{t('downloadQrOnlyPng')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDownloadQrOnlySvg}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 text-[#0B1F3A] border border-slate-300 transition-all cursor-pointer shadow-xs"
-            title={t('downloadQrOnlySvg')}
-          >
-            <FileDown className="w-4 h-4 text-emerald-700" />
-            <span>{t('downloadQrOnlySvg')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDownloadPosterPng}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-[#F5B700] hover:bg-[#e0a700] text-[#0B1F3A] shadow-xs transition-all cursor-pointer"
-            title={t('downloadQrPng')}
-          >
-            <Download className="w-4 h-4" />
-            <span>{t('downloadQrPng')} (Poster)</span>
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Hidden high-res canvas used for standalone & poster export */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">

@@ -50,7 +50,17 @@ export const PublicReportPage: React.FC = () => {
   // Check if citizen scanned a department-specific QR code (?dept=... or ?office=...)
   const deptParam = searchParams.get('dept') || searchParams.get('office');
   const lockedDepartment = useMemo<DepartmentDef>(() => {
-    return resolveDepartment(deptParam) || COMMON_DEPARTMENTS[0];
+    const active = getAllDepartments();
+    const resolved = resolveDepartment(deptParam, active);
+    if (resolved) return resolved;
+    if (active.length > 0) return active[0];
+    return {
+      id: 'sub-city',
+      code: 'central',
+      am: 'የክፍለ ከተማው ዋና አስተዳደር ጽ/ቤት',
+      en: 'Sub-City Central Administration',
+      isCustom: false,
+    };
   }, [deptParam]);
 
   // Form states
@@ -59,8 +69,7 @@ export const PublicReportPage: React.FC = () => {
   const [reporterPhone, setReporterPhone] = useState('');
   const [corruptionType, setCorruptionType] = useState<CorruptionType | ''>('');
   const [office, setOffice] = useState(() => {
-    const initial = resolveDepartment(deptParam) || COMMON_DEPARTMENTS[0];
-    return formatDepartmentSubmission(initial);
+    return formatDepartmentSubmission(lockedDepartment);
   });
   const [personInvolved, setPersonInvolved] = useState('');
   const [incidentDate, setIncidentDate] = useState(() => {
@@ -81,9 +90,10 @@ export const PublicReportPage: React.FC = () => {
     apiClient.getDepartments().then((remote) => {
       if (!remote || remote.length === 0) return;
       remote.forEach((d) => {
-        if (d.isCustom) saveCustomDepartment(d);
+        saveCustomDepartment(d);
       });
-      const resolved = resolveDepartment(deptParam);
+      const active = getAllDepartments();
+      const resolved = resolveDepartment(deptParam, active);
       if (resolved) {
         setOffice(formatDepartmentSubmission(resolved));
       }
