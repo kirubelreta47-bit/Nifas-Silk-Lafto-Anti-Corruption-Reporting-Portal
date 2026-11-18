@@ -2,7 +2,7 @@ import React, { useRef, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { useLanguage } from '../../context/LanguageContext';
-import { COMMON_DEPARTMENTS, getAllDepartments, DepartmentDef } from '../../constants/departments';
+import { getAllDepartments, DepartmentDef, STANDARD_DEPARTMENT_PRESETS } from '../../constants/departments';
 import {
   QrCode,
   Download,
@@ -40,10 +40,16 @@ export const QrCodePage: React.FC = () => {
   }, []);
 
   const [searchParams] = useSearchParams();
-  const [departments, setDepartments] = useState<DepartmentDef[]>(() => getAllDepartments());
+  const [departments, setDepartments] = useState<DepartmentDef[]>(() => {
+    const active = getAllDepartments();
+    return active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+  });
 
   useEffect(() => {
-    const handleUpdate = () => setDepartments(getAllDepartments());
+    const handleUpdate = () => {
+      const active = getAllDepartments();
+      setDepartments(active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS);
+    };
     window.addEventListener('nsl_departments_updated', handleUpdate);
     return () => window.removeEventListener('nsl_departments_updated', handleUpdate);
   }, []);
@@ -51,9 +57,10 @@ export const QrCodePage: React.FC = () => {
   // Department Selection state (can be pre-selected via ?dept= query param)
   const initialDept = searchParams.get('dept');
   const [selectedDeptId, setSelectedDeptId] = useState<string>(() => {
-    const current = getAllDepartments();
-    if (initialDept && current.some((d) => d.id === initialDept)) return initialDept;
-    return current[0]?.id || '';
+    const active = getAllDepartments();
+    const list = active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+    if (initialDept && list.some((d) => d.id === initialDept)) return initialDept;
+    return list[0]?.id || 'land-admin';
   });
   const [copied, setCopied] = useState<boolean>(false);
 
@@ -249,31 +256,8 @@ export const QrCodePage: React.FC = () => {
         </button>
       </div>
 
-      {/* Main Clean Card (Simple & Easy Looking) or Empty State */}
-      {departments.length === 0 ? (
-        <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
-          <div className="w-16 h-16 rounded-3xl bg-[#E8EEF7] flex items-center justify-center mx-auto text-[#0B1F3A]">
-            <Building2 className="w-8 h-8" />
-          </div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-[#0B1F3A]">
-            {lang === 'am' ? 'ምንም የነቁ መሥሪያ ቤቶች የሉም' : 'No Active Departments Yet'}
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-            {lang === 'am'
-              ? 'የQR ኮድ ፖስተር ለማመንጨት እባክዎ መጀመሪያ ወደ መሥሪያ ቤቶች መፍጠሪያ በመሄድ ከመደበኛ ዝርዝር ይምረጡ ወይም አዲስ መሥሪያ ቤት ያንቁ።'
-              : 'To generate official QR code posters, please first select standard bureaus or create departments in the department manager.'}
-          </p>
-          <div className="pt-2">
-            <Link
-              to="/admin/departments"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#0B1F3A] hover:bg-[#122b4d] text-white transition-all shadow-xs"
-            >
-              <span>{lang === 'am' ? 'ወደ መሥሪያ ቤቶች መፍጠሪያ ሂድ' : 'Go to Create Departments'}</span>
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 text-center">
+      {/* Main Clean Card (Simple & Easy Looking) */}
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 text-center">
           {/* 1. Department Dropdown */}
           <div className="text-left space-y-1.5 no-print">
             <label
@@ -389,7 +373,6 @@ export const QrCodePage: React.FC = () => {
             </button>
           </div>
         </div>
-      )}
 
       {/* Hidden high-res canvas used for standalone & poster export */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
