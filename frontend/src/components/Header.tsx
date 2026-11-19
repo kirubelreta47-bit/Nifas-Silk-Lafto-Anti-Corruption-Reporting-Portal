@@ -49,8 +49,8 @@ export const Header: React.FC = () => {
               </span>
             </button>
 
-            {/* Portal navigation links - Only visible when inside admin portal */}
-            {isAdminPath && (
+            {/* Portal navigation links */}
+            {isAdminPath ? (
               <Link
                 to="/"
                 className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 border border-slate-700 text-slate-100 hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-[#F5B700]"
@@ -58,6 +58,20 @@ export const Header: React.FC = () => {
                 <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#F5B700] shrink-0" />
                 <span className="hidden sm:inline">{t('backToPublic')}</span>
                 <span className="sm:hidden">ጥቆማ</span>
+              </Link>
+            ) : (
+              <Link
+                to={isAuthenticated ? '/admin' : '/admin/login'}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-[#F5B700] hover:bg-[#e0a700] text-[#0B1F3A] transition-all shadow-xs focus:outline-none focus:ring-2 focus:ring-[#F5B700]"
+                title={isAuthenticated ? t('adminDashboard') : t('adminPortal')}
+              >
+                <Lock className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden sm:inline">
+                  {isAuthenticated
+                    ? (lang === 'am' ? 'የአስተዳዳሪ ዳሽቦርድ' : 'Admin Dashboard')
+                    : (lang === 'am' ? 'የአስተዳዳሪ መግቢያ' : 'Admin Login')}
+                </span>
+                <span className="sm:hidden">አስተዳዳሪ</span>
               </Link>
             )}
           </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { reportService } from '../../services/reportService';
 import { authService } from '../../services/authService';
-import { resolveFileUrl } from '../../services/apiClient';
+import { resolveFileUrl, apiClient } from '../../services/apiClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, ReportStatus, CorruptionType } from '../../types';
@@ -47,6 +47,14 @@ export const ReportDetailPage: React.FC = () => {
     if (!id) return;
     const current = reportService.getReportById(id);
     if (!current) {
+      // Async fallback to backend Neon database
+      apiClient.getReportById(id).then((serverReport) => {
+        if (serverReport) {
+          setReport(serverReport);
+          setSelectedStatus(serverReport.status);
+          setAdminNotes(serverReport.adminNotes || '');
+        }
+      });
       return;
     }
 

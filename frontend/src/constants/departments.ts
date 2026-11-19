@@ -277,14 +277,19 @@ export function matchReportToDepartment(
   officeStr: string,
   list: DepartmentDef[] = getAllDepartments()
 ): DepartmentDef | null {
-  if (!officeStr) return null;
+  if (!officeStr || typeof officeStr !== 'string') return null;
   const lower = officeStr.toLowerCase();
   for (const dept of list) {
+    if (!dept) continue;
+    const id = dept.id ? dept.id.toLowerCase() : '';
+    const code = dept.code ? dept.code.toLowerCase() : '';
+    const en = dept.en ? dept.en.toLowerCase() : '';
+    const am = dept.am || '';
     if (
-      lower.includes(dept.id.toLowerCase()) ||
-      lower.includes(dept.code.toLowerCase()) ||
-      lower.includes(dept.en.toLowerCase()) ||
-      officeStr.includes(dept.am)
+      (id && lower.includes(id)) ||
+      (code && lower.includes(code)) ||
+      (en && lower.includes(en)) ||
+      (am && officeStr.includes(am))
     ) {
       return dept;
     }

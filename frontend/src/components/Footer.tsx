@@ -63,6 +63,10 @@ export const Footer: React.FC = () => {
                 <FileText className="w-3.5 h-3.5" />
                 {t('backToPublic')}
               </Link>
+              <Link to="/admin" className="hover:text-[#F5B700] transition-colors flex items-center gap-2">
+                <Lock className="w-3.5 h-3.5 text-[#F5B700]" />
+                <span>{t('adminPortal')}</span>
+              </Link>
               <div className="pt-2 text-xs text-slate-400">
                 የፌዴራል ሥነ-ምግባርና ፀረ-ሙስና ኮሚሽን እና የአዲስ አበባ ከተማ አስተዳደር መመሪያ ቁጥር 21/2015 መሠረት የሚሰራ።
               </div>

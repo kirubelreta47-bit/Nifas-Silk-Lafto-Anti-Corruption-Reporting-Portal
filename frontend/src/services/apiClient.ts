@@ -8,12 +8,15 @@ import {
 } from '../types';
 import { DepartmentDef } from '../constants/departments';
 
-// In production (Vercel), VITE_API_BASE_URL must be set to the Render backend URL.
+const DEFAULT_PROD_API = 'https://nifas-silk-lafto-anti-corruption.onrender.com/api';
+const DEFAULT_DEV_API = 'http://localhost:5000/api';
+
+// In production (Vercel), default to the live Render backend URL if env variable is not set.
 // In local dev, it defaults to http://localhost:5000/api via the frontend/.env file.
 const rawApiUrl: string =
   (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) ||
   (typeof process !== 'undefined' && process.env?.VITE_API_BASE_URL) ||
-  (import.meta.env.PROD ? '' : 'http://localhost:5000/api');
+  (import.meta.env.PROD ? DEFAULT_PROD_API : DEFAULT_DEV_API);
 
 // Normalize: remove trailing slashes and ensure clean '/api' endpoint
 const cleanBase = rawApiUrl.trim().replace(/\/+$/, '');

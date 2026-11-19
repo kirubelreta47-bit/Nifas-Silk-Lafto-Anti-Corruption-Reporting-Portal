@@ -39,6 +39,9 @@ import {
   Check,
   PhoneCall,
   Clock,
+  Building2,
+  ChevronDown,
+  QrCode,
 } from 'lucide-react';
 
 interface EvidenceAttachment extends EvidenceItem {
@@ -52,13 +55,17 @@ export const PublicReportPage: React.FC = () => {
 
   // Check if citizen scanned a department-specific QR code (?dept=... or ?office=...)
   const deptParam = searchParams.get('dept') || searchParams.get('office');
-  const lockedDepartment = useMemo<DepartmentDef>(() => {
+
+  const [departments, setDepartments] = useState<DepartmentDef[]>(() => {
     const active = getAllDepartments();
-    const list = active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
-    const resolved = resolveDepartment(deptParam, list);
+    return active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+  });
+
+  const lockedDepartment = useMemo<DepartmentDef>(() => {
+    const resolved = resolveDepartment(deptParam, departments);
     if (resolved) return resolved;
-    return list[0];
-  }, [deptParam]);
+    return departments[0] || STANDARD_DEPARTMENT_PRESETS[0];
+  }, [deptParam, departments]);
 
   // Form states
   const [isAnonymous, setIsAnonymous] = useState(true);
@@ -79,21 +86,35 @@ export const PublicReportPage: React.FC = () => {
 
   // Keep office locked whenever department param changes
   useEffect(() => {
-    setOffice(formatDepartmentSubmission(lockedDepartment));
-  }, [lockedDepartment]);
+    if (deptParam) {
+      setOffice(formatDepartmentSubmission(lockedDepartment));
+    }
+  }, [deptParam, lockedDepartment]);
 
-  // Sync latest departments from backend
+  // Sync latest departments from backend and storage
   useEffect(() => {
+    const handleUpdate = () => {
+      const active = getAllDepartments();
+      const list = active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+      setDepartments(list);
+    };
+    window.addEventListener('nsl_departments_updated', handleUpdate);
+
     apiClient.getDepartments().then((remote) => {
       if (!remote || remote.length === 0) return;
       saveDepartmentsBatch(remote);
       const active = getAllDepartments();
       const list = active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
-      const resolved = resolveDepartment(deptParam, list);
-      if (resolved) {
-        setOffice(formatDepartmentSubmission(resolved));
+      setDepartments(list);
+      if (deptParam) {
+        const resolved = resolveDepartment(deptParam, list);
+        if (resolved) {
+          setOffice(formatDepartmentSubmission(resolved));
+        }
       }
     });
+
+    return () => window.removeEventListener('nsl_departments_updated', handleUpdate);
   }, [deptParam]);
 
   // UI / Submission states
@@ -563,6 +584,51 @@ export const PublicReportPage: React.FC = () => {
                   </select>
                   {errors.corruptionType && (
                     <p className="text-xs text-rose-700 font-bold">{errors.corruptionType}</p>
+                  )}
+                </div>
+
+                {/* Department / Office Selection */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="report-office" className="block text-xs sm:text-sm font-bold text-[#0B1F3A]">
+                      {t('officeLabel')} <span className="text-rose-600 font-extrabold">*</span>
+                    </label>
+                    {deptParam && (
+                      <span className="text-[11px] font-bold text-[#0B1F3A] bg-[#F5B700]/25 border border-[#F5B700]/50 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                        <QrCode className="w-3 h-3 text-[#0B1F3A]" />
+                        <span>{lang === 'am' ? 'በQR ኮድ የተመረጠ' : 'Selected via QR Code'}</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Building2 className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <select
+                      id="report-office"
+                      value={office}
+                      onChange={(e) => {
+                        setOffice(e.target.value);
+                        if (errors.office) setErrors((prev) => ({ ...prev, office: '' }));
+                      }}
+                      aria-invalid={!!errors.office}
+                      className={`w-full pl-10 pr-10 min-h-[48px] rounded-xl border bg-[#F8FAFC] focus:bg-white text-slate-900 font-medium text-sm focus:outline-none focus:border-[#0B1F3A] focus:ring-2 focus:ring-[#F5B700] transition-colors appearance-none cursor-pointer ${
+                        errors.office ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-300'
+                      }`}
+                    >
+                      <option value="">{lang === 'am' ? '-- መሥሪያ ቤቱን ይምረጡ --' : '-- Select Department --'}</option>
+                      {departments.map((dept) => {
+                        const val = formatDepartmentSubmission(dept);
+                        const label = lang === 'am' ? `${dept.am} (${dept.en})` : `${dept.en} (${dept.am})`;
+                        return (
+                          <option key={dept.id} value={val}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                  {errors.office && (
+                    <p className="text-xs text-rose-700 font-bold">{errors.office}</p>
                   )}
                 </div>
 
