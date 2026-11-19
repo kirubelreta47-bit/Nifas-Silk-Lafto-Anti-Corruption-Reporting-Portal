@@ -11,6 +11,7 @@ import {
   COMMON_DEPARTMENTS,
   DepartmentDef,
   getAllDepartments,
+  STANDARD_DEPARTMENT_PRESETS,
   saveCustomDepartment,
   saveDepartmentsBatch,
 } from '../constants/departments';
@@ -53,16 +54,10 @@ export const PublicReportPage: React.FC = () => {
   const deptParam = searchParams.get('dept') || searchParams.get('office');
   const lockedDepartment = useMemo<DepartmentDef>(() => {
     const active = getAllDepartments();
-    const resolved = resolveDepartment(deptParam, active);
+    const list = active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+    const resolved = resolveDepartment(deptParam, list);
     if (resolved) return resolved;
-    if (active.length > 0) return active[0];
-    return {
-      id: 'sub-city',
-      code: 'central',
-      am: 'የክፍለ ከተማው ዋና አስተዳደር ጽ/ቤት',
-      en: 'Sub-City Central Administration',
-      isCustom: false,
-    };
+    return list[0];
   }, [deptParam]);
 
   // Form states
@@ -93,7 +88,8 @@ export const PublicReportPage: React.FC = () => {
       if (!remote || remote.length === 0) return;
       saveDepartmentsBatch(remote);
       const active = getAllDepartments();
-      const resolved = resolveDepartment(deptParam, active);
+      const list = active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+      const resolved = resolveDepartment(deptParam, list);
       if (resolved) {
         setOffice(formatDepartmentSubmission(resolved));
       }

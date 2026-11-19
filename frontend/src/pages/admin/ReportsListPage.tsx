@@ -9,6 +9,7 @@ import {
   getAllDepartments,
   DepartmentDef,
   matchReportToDepartment,
+  STANDARD_DEPARTMENT_PRESETS,
 } from '../../constants/departments';
 import {
   Search,
@@ -85,10 +86,16 @@ export const ReportsListPage: React.FC = () => {
     }
   };
 
-  const [departments, setDepartments] = useState<DepartmentDef[]>(() => getAllDepartments());
+  const [departments, setDepartments] = useState<DepartmentDef[]>(() => {
+    const active = getAllDepartments();
+    return active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+  });
 
   useEffect(() => {
-    const handleUpdate = () => setDepartments(getAllDepartments());
+    const handleUpdate = () => {
+      const active = getAllDepartments();
+      setDepartments(active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS);
+    };
     window.addEventListener('nsl_departments_updated', handleUpdate);
     return () => window.removeEventListener('nsl_departments_updated', handleUpdate);
   }, []);

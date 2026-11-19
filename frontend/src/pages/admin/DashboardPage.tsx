@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { reportService } from '../../services/reportService';
+import { apiClient } from '../../services/apiClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, CorruptionType, ReportStatus } from '../../types';
-import { COMMON_DEPARTMENTS, getAllDepartments, DepartmentDef } from '../../constants/departments';
+import { COMMON_DEPARTMENTS, getAllDepartments, DepartmentDef, STANDARD_DEPARTMENT_PRESETS, saveDepartmentsBatch } from '../../constants/departments';
 import {
   FileText,
   AlertCircle,
@@ -59,10 +60,16 @@ export const DashboardPage: React.FC = () => {
 
   // Department Drilldown Filter state
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
-  const [departments, setDepartments] = useState<DepartmentDef[]>(() => getAllDepartments());
+  const [departments, setDepartments] = useState<DepartmentDef[]>(() => {
+    const active = getAllDepartments();
+    return active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+  });
 
   useEffect(() => {
-    const handleUpdate = () => setDepartments(getAllDepartments());
+    const handleUpdate = () => {
+      const active = getAllDepartments();
+      setDepartments(active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS);
+    };
     window.addEventListener('nsl_departments_updated', handleUpdate);
     return () => window.removeEventListener('nsl_departments_updated', handleUpdate);
   }, []);
@@ -85,6 +92,14 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     reportService.syncWithBackend().then((synced) => {
       if (synced) refreshData(timeRange, selectedDeptId);
+    });
+    // Also sync departments from backend on mount
+    apiClient.getDepartments().then((remote) => {
+      if (remote && remote.length > 0) {
+        saveDepartmentsBatch(remote);
+        const active = getAllDepartments();
+        setDepartments(active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS);
+      }
     });
   }, []);
 
