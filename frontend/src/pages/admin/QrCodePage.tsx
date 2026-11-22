@@ -18,7 +18,6 @@ import {
   Check,
   Copy,
   ChevronDown,
-  Sparkles,
 } from 'lucide-react';
 
 export const QrCodePage: React.FC = () => {
@@ -336,52 +335,6 @@ export const QrCodePage: React.FC = () => {
               )}
             </select>
             <ChevronDown className="w-5 h-5 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-
-          {/* Quick Department Shortcut Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-2 text-xs">
-            <span className="text-[11px] font-semibold text-slate-400 mr-1 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#F5B700]" />
-              <span>{lang === 'am' ? 'ፈጣን ምርጫ፡' : 'Quick select:'}</span>
-            </span>
-            {/* Standard bureaus quick pills */}
-            {standardBureaus.slice(0, 5).map((dept) => {
-              const isSelected = dept.id === selectedDeptId;
-              const label = lang === 'am' ? dept.am.split(' ')[0] : dept.code.toUpperCase();
-              return (
-                <button
-                  key={dept.id}
-                  type="button"
-                  onClick={() => setSelectedDeptId(dept.id)}
-                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer border ${
-                    isSelected
-                      ? 'bg-[#0B1F3A] text-[#F5B700] border-[#0B1F3A] shadow-xs'
-                      : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-            {/* Custom bureaus quick pills */}
-            {customBureaus.map((dept) => {
-              const isSelected = dept.id === selectedDeptId;
-              const label = lang === 'am' ? dept.am.split(' ')[0] : dept.code.toUpperCase();
-              return (
-                <button
-                  key={dept.id}
-                  type="button"
-                  onClick={() => setSelectedDeptId(dept.id)}
-                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer border ${
-                    isSelected
-                      ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
-                      : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300'
-                  }`}
-                >
-                  ✨ {label}
-                </button>
-              );
-            })}
           </div>
         </div>
 
