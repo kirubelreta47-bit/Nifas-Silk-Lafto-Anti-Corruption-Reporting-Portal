@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 
@@ -16,34 +17,36 @@ import { DepartmentsPage } from './pages/admin/DepartmentsPage';
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <BrowserRouter>
-        <div className="min-h-screen flex flex-col bg-white text-[#0B1F3A]">
-          <Header />
-          <div className="flex-1">
-            <Routes>
-              {/* Public Citizen Reporting Form */}
-              <Route path="/" element={<PublicReportPage />} />
+    <ErrorBoundary>
+      <LanguageProvider>
+        <BrowserRouter>
+          <div className="min-h-screen flex flex-col bg-white text-[#0B1F3A]">
+            <Header />
+            <div className="flex-1">
+              <Routes>
+                {/* Public Citizen Reporting Form */}
+                <Route path="/" element={<PublicReportPage />} />
 
-              {/* Admin Login */}
-              <Route path="/admin/login" element={<AdminLoginPage />} />
+                {/* Admin Login */}
+                <Route path="/admin/login" element={<AdminLoginPage />} />
 
-              {/* Protected Admin Suite */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="reports" element={<ReportsListPage />} />
-                <Route path="reports/:id" element={<ReportDetailPage />} />
-                <Route path="departments" element={<DepartmentsPage />} />
-                <Route path="qr" element={<QrCodePage />} />
-              </Route>
+                {/* Protected Admin Suite */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<DashboardPage />} />
+                  <Route path="reports" element={<ReportsListPage />} />
+                  <Route path="reports/:id" element={<ReportDetailPage />} />
+                  <Route path="departments" element={<DepartmentsPage />} />
+                  <Route path="qr" element={<QrCodePage />} />
+                </Route>
 
-              {/* Fallback route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                {/* Fallback route */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+            <Footer />
           </div>
-          <Footer />
-        </div>
-      </BrowserRouter>
-    </LanguageProvider>
+        </BrowserRouter>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 }

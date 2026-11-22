@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { reportService } from '../../services/reportService';
 import { useLanguage } from '../../context/LanguageContext';

@@ -214,9 +214,12 @@ export function getAllDepartments(): DepartmentDef[] {
 }
 
 export function isDepartmentActive(idOrCode: string): boolean {
+  if (!idOrCode) return false;
   const active = getAllDepartments();
   const q = idOrCode.toLowerCase();
-  return active.some((d) => d.id.toLowerCase() === q || d.code.toLowerCase() === q);
+  return active.some(
+    (d) => (d?.id && d.id.toLowerCase() === q) || (d?.code && d.code.toLowerCase() === q)
+  );
 }
 
 /**
@@ -232,12 +235,13 @@ export function resolveDepartment(
 
   // 1. Direct ID or Code match in active list
   const byId = list.find(
-    (d) => d.id.toLowerCase() === q || d.code.toLowerCase() === q
+    (d) => (d?.id && d.id.toLowerCase() === q) || (d?.code && d.code.toLowerCase() === q)
   );
   if (byId) return byId;
 
   // 2. English name match in active list
   const byEn = list.find((d) => {
+    if (!d?.en) return false;
     const enLower = d.en.toLowerCase();
     return enLower === q || enLower.includes(q) || q.includes(enLower);
   });
@@ -246,17 +250,17 @@ export function resolveDepartment(
   // 3. Amharic name match in active list
   const rawQ = query.trim();
   const byAm = list.find(
-    (d) => d.am === rawQ || d.am.includes(rawQ) || rawQ.includes(d.am)
+    (d) => d?.am && (d.am === rawQ || d.am.includes(rawQ) || rawQ.includes(d.am))
   );
   if (byAm) return byAm;
 
   // 4. Check STANDARD_DEPARTMENT_PRESETS if not found in active list
   const presetMatch = STANDARD_DEPARTMENT_PRESETS.find(
     (p) =>
-      p.id.toLowerCase() === q ||
-      p.code.toLowerCase() === q ||
-      p.en.toLowerCase() === q ||
-      p.am === rawQ
+      (p?.id && p.id.toLowerCase() === q) ||
+      (p?.code && p.code.toLowerCase() === q) ||
+      (p?.en && p.en.toLowerCase() === q) ||
+      p?.am === rawQ
   );
   if (presetMatch) return presetMatch;
 
@@ -300,11 +304,15 @@ export function matchReportToDepartment(
 /**
  * Format department for submission to backend / Neon PostgreSQL
  */
-export function formatDepartmentSubmission(dept: DepartmentDef): string {
+export function formatDepartmentSubmission(dept?: DepartmentDef | null): string {
+  if (!dept) return '';
   if (dept.id === 'custom') {
-    return dept.en;
+    return dept.en || dept.am || '';
   }
-  return `${dept.en} (${dept.am})`;
+  const en = dept.en || (dept as any).nameEn || '';
+  const am = dept.am || (dept as any).nameAm || '';
+  if (en && am) return `${en} (${am})`;
+  return en || am || dept.id || '';
 }
 
 
