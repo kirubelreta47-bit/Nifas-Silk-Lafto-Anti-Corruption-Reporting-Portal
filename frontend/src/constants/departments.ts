@@ -213,6 +213,28 @@ export function getAllDepartments(): DepartmentDef[] {
   return getCustomDepartments();
 }
 
+/**
+ * Return ALL departments: standard presets + custom/newly created ones.
+ * Deduplicates by id, so any custom override of a standard preset is respected.
+ * Used for QR Code generator, public reporting options, etc. so admin and citizens
+ * can choose from both standard/old departments and newly created departments.
+ */
+export function getAllDepartmentsWithPresets(): DepartmentDef[] {
+  const custom = getAllDepartments();
+  const customMap = new Map(custom.map((d) => [d.id.toLowerCase(), d]));
+
+  // Standard presets (with any custom override applied)
+  const standards = STANDARD_DEPARTMENT_PRESETS.map((preset) => {
+    return customMap.get(preset.id.toLowerCase()) || preset;
+  });
+
+  // Any custom departments that are not among the standard preset IDs
+  const standardIds = new Set(STANDARD_DEPARTMENT_PRESETS.map((p) => p.id.toLowerCase()));
+  const extraCustom = custom.filter((c) => !standardIds.has(c.id.toLowerCase()));
+
+  return [...standards, ...extraCustom];
+}
+
 export function isDepartmentActive(idOrCode: string): boolean {
   if (!idOrCode) return false;
   const active = getAllDepartments();

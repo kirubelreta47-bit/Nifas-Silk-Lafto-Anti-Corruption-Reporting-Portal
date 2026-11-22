@@ -37,6 +37,7 @@ export default function App() {
                   <Route path="reports/:id" element={<ReportDetailPage />} />
                   <Route path="departments" element={<DepartmentsPage />} />
                   <Route path="qr" element={<QrCodePage />} />
+                  <Route path="qr-code" element={<Navigate to="/admin/qr" replace />} />
                 </Route>
 
                 {/* Fallback route */}

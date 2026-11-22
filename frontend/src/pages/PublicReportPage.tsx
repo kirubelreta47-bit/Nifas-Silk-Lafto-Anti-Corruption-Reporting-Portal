@@ -12,6 +12,7 @@ import {
   DepartmentDef,
   getAllDepartments,
   STANDARD_DEPARTMENT_PRESETS,
+  getAllDepartmentsWithPresets,
   saveCustomDepartment,
   saveDepartmentsBatch,
 } from '../constants/departments';
@@ -57,8 +58,7 @@ export const PublicReportPage: React.FC = () => {
   const deptParam = searchParams.get('dept') || searchParams.get('office');
 
   const [departments, setDepartments] = useState<DepartmentDef[]>(() => {
-    const active = getAllDepartments();
-    return active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+    return getAllDepartmentsWithPresets();
   });
 
   const lockedDepartment = useMemo<DepartmentDef>(() => {
@@ -94,17 +94,14 @@ export const PublicReportPage: React.FC = () => {
   // Sync latest departments from backend and storage
   useEffect(() => {
     const handleUpdate = () => {
-      const active = getAllDepartments();
-      const list = active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
-      setDepartments(list);
+      setDepartments(getAllDepartmentsWithPresets());
     };
     window.addEventListener('nsl_departments_updated', handleUpdate);
 
     apiClient.getDepartments().then((remote) => {
       if (!remote || remote.length === 0) return;
       saveDepartmentsBatch(remote);
-      const active = getAllDepartments();
-      const list = active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+      const list = getAllDepartmentsWithPresets();
       setDepartments(list);
       if (deptParam) {
         const resolved = resolveDepartment(deptParam, list);

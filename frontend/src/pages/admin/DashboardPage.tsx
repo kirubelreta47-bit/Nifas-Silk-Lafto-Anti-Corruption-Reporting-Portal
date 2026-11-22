@@ -281,7 +281,7 @@ export const DashboardPage: React.FC = () => {
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <Link
-            to="/admin/qr-code"
+            to="/admin/qr"
             className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 text-[#0B1F3A] border border-slate-300 transition-all cursor-pointer shadow-xs"
           >
             <QrCode className="w-4 h-4 text-[#0B1F3A]" />
@@ -431,7 +431,7 @@ export const DashboardPage: React.FC = () => {
             </Link>
 
             <Link
-              to="/admin/qr-code"
+              to={selectedDeptDef ? `/admin/qr?dept=${encodeURIComponent(selectedDeptDef.id)}` : '/admin/qr'}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition-colors cursor-pointer"
             >
               <QrCode className="w-4 h-4 text-[#F5B700]" />

@@ -566,7 +566,7 @@ export const ReportsListPage: React.FC = () => {
                     </span>
 
                     <Link
-                      to="/admin/qr-code"
+                      to={`/admin/qr?dept=${encodeURIComponent(department.id)}`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors"
                       title={t('generateQrForDepartment')}
                     >
