@@ -5,7 +5,14 @@ import { apiClient } from '../../services/apiClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Report, CorruptionType, ReportStatus } from '../../types';
-import { COMMON_DEPARTMENTS, getAllDepartments, DepartmentDef, STANDARD_DEPARTMENT_PRESETS, saveDepartmentsBatch } from '../../constants/departments';
+import {
+  COMMON_DEPARTMENTS,
+  getAllDepartments,
+  DepartmentDef,
+  STANDARD_DEPARTMENT_PRESETS,
+  getAllDepartmentsWithPresets,
+  saveDepartmentsBatch,
+} from '../../constants/departments';
 import {
   FileText,
   AlertCircle,
@@ -61,14 +68,12 @@ export const DashboardPage: React.FC = () => {
   // Department Drilldown Filter state
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
   const [departments, setDepartments] = useState<DepartmentDef[]>(() => {
-    const active = getAllDepartments();
-    return active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+    return getAllDepartmentsWithPresets();
   });
 
   useEffect(() => {
     const handleUpdate = () => {
-      const active = getAllDepartments();
-      setDepartments(active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS);
+      setDepartments(getAllDepartmentsWithPresets());
     };
     window.addEventListener('nsl_departments_updated', handleUpdate);
     return () => window.removeEventListener('nsl_departments_updated', handleUpdate);
@@ -97,8 +102,7 @@ export const DashboardPage: React.FC = () => {
     apiClient.getDepartments().then((remote) => {
       if (remote && remote.length > 0) {
         saveDepartmentsBatch(remote);
-        const active = getAllDepartments();
-        setDepartments(active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS);
+        setDepartments(getAllDepartmentsWithPresets());
       }
     });
   }, []);

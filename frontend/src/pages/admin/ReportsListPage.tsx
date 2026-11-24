@@ -10,6 +10,7 @@ import {
   DepartmentDef,
   matchReportToDepartment,
   STANDARD_DEPARTMENT_PRESETS,
+  getAllDepartmentsWithPresets,
 } from '../../constants/departments';
 import {
   Search,
@@ -87,14 +88,12 @@ export const ReportsListPage: React.FC = () => {
   };
 
   const [departments, setDepartments] = useState<DepartmentDef[]>(() => {
-    const active = getAllDepartments();
-    return active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS;
+    return getAllDepartmentsWithPresets();
   });
 
   useEffect(() => {
     const handleUpdate = () => {
-      const active = getAllDepartments();
-      setDepartments(active.length > 0 ? active : STANDARD_DEPARTMENT_PRESETS);
+      setDepartments(getAllDepartmentsWithPresets());
     };
     window.addEventListener('nsl_departments_updated', handleUpdate);
     return () => window.removeEventListener('nsl_departments_updated', handleUpdate);
