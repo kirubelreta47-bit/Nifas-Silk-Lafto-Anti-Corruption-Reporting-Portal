@@ -254,15 +254,11 @@ export const QrCodePage: React.FC = () => {
     // Official Address at bottom of poster in very small font size
     ctx.fillStyle = '#1E293B';
     ctx.font = '600 20px "Noto Sans Ethiopic", "Inter", sans-serif';
-    ctx.fillText('አድራሻ፡ ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ፣ አዲስ አበባ', width / 2, 1215);
+    ctx.fillText('አድራሻ፡ ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ፣ አዲስ አበባ', width / 2, 1230);
 
     ctx.fillStyle = '#64748B';
     ctx.font = '500 16px "Inter", sans-serif';
-    ctx.fillText('Location: Haile Garment Square, Nifas Silk-Lafto Sub-City, Addis Ababa, Ethiopia', width / 2, 1248);
-
-    ctx.fillStyle = '#0B1F3A';
-    ctx.font = 'bold 14px "Inter", sans-serif';
-    ctx.fillText('Google Maps: Haile Garment Square, Addis Ababa', width / 2, 1275);
+    ctx.fillText('Location: Haile Garment Square, Nifas Silk-Lafto Sub-City, Addis Ababa, Ethiopia', width / 2, 1265);
 
     // Bottom Decorative Gold Bar
     ctx.fillStyle = '#F5B700';
@@ -419,10 +415,11 @@ export const QrCodePage: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="no-print inline-flex items-center gap-1 text-[11px] font-bold text-[#0B1F3A] hover:text-[#F5B700] transition-colors"
-              title="View on Google Maps"
+              title={lang === 'am' ? 'አድራሻ' : 'Location'}
             >
-              <span>Google Maps</span>
-              <ExternalLink className="w-3 h-3" />
+              <MapPin className="w-3 h-3 text-[#F5B700]" />
+              <span>{lang === 'am' ? 'አድራሻ' : 'Location'}</span>
+              <ExternalLink className="w-2.5 h-2.5" />
             </a>
           </div>
         </div>

@@ -45,9 +45,12 @@ export const Footer: React.FC = () => {
                 <span className="w-2 h-2 rounded-full bg-[#F5B700]" />
                 <span>+251 11 442 0123 / 011 442 0456</span>
               </li>
-              <li className="flex items-start gap-2.5 pt-1.5 border-t border-slate-700/60">
+              <li className="flex items-start gap-2.5 pt-2 border-t border-slate-700/60">
                 <MapPin className="w-4 h-4 text-[#F5B700] shrink-0 mt-0.5" />
                 <div className="space-y-1">
+                  <span className="font-semibold text-white text-xs block">
+                    {lang === 'am' ? 'አድራሻ' : 'Location'}
+                  </span>
                   <span className="text-xs text-slate-200 leading-relaxed block">
                     {lang === 'am'
                       ? 'ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ ዋና አስተዳደር ጽ/ቤት፣ አዲስ አበባ'
@@ -57,10 +60,11 @@ export const Footer: React.FC = () => {
                     href="https://www.google.com/maps/search/?api=1&query=Haile+Garment+Square,+Nifas+Silk-Lafto,+Addis+Ababa"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[#F5B700] hover:underline font-bold text-xs"
-                    title="Google Maps"
+                    className="inline-flex items-center gap-1.5 text-[#F5B700] hover:text-amber-300 font-bold text-xs pt-0.5 transition-colors"
+                    title={lang === 'am' ? 'አድራሻ' : 'Location'}
                   >
-                    <span>Google Maps</span>
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>{lang === 'am' ? 'አድራሻ' : 'Location'}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>

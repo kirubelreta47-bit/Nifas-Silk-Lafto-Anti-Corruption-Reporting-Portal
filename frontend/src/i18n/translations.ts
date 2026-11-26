@@ -97,7 +97,7 @@ export const translations = {
     sidebarHotlineTollFree: '969 (ነፃ የጥሪ መስመር)',
     sidebarHotlineDirect: '011-442-0123 / 011-442-0456',
     sidebarLocationText: 'ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ አስተዳደር ዋና ጽ/ቤት፣ አዲስ አበባ',
-    viewOnGoogleMaps: 'በGoogle ካርታ ይመልከቱ',
+    viewOnGoogleMaps: 'አድራሻ',
     officeLocationTitle: 'የክፍለ ከተማው ዋና ጽ/ቤት አድራሻ',
     officeLocationAddress: 'ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ፣ አዲስ አበባ',
 
@@ -367,7 +367,7 @@ export const translations = {
     sidebarHotlineTollFree: '969 (Toll-free Hotline)',
     sidebarHotlineDirect: '+251 11 442 0123 / 011 442 0456',
     sidebarLocationText: 'Haile Garment Square, Nifas Silk-Lafto Sub-City Administrative Office, Addis Ababa',
-    viewOnGoogleMaps: 'View on Google Maps',
+    viewOnGoogleMaps: 'Location',
     officeLocationTitle: 'Sub-City HQ Office Location',
     officeLocationAddress: 'Haile Garment Square, Nifas Silk-Lafto, Addis Ababa',
 
