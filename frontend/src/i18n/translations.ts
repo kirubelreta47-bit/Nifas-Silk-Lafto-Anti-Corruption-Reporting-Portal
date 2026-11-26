@@ -96,7 +96,10 @@ export const translations = {
     sidebarHotlinesTitle: 'አስቸኳይ የስልክ መስመሮች',
     sidebarHotlineTollFree: '969 (ነፃ የጥሪ መስመር)',
     sidebarHotlineDirect: '011-442-0123 / 011-442-0456',
-    sidebarLocationText: 'ክፍለ ከተማው ዋና አስተዳደር ጽ/ቤት፣ ጎተራ / ሳሪስ መንገድ',
+    sidebarLocationText: 'ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ አስተዳደር ዋና ጽ/ቤት፣ አዲስ አበባ',
+    viewOnGoogleMaps: 'በGoogle ካርታ ይመልከቱ',
+    officeLocationTitle: 'የክፍለ ከተማው ዋና ጽ/ቤት አድራሻ',
+    officeLocationAddress: 'ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ፣ አዲስ አበባ',
 
     // Errors
     errorRequiredField: 'ይህ መረጃ መሞላት አለበት',
@@ -363,7 +366,10 @@ export const translations = {
     sidebarHotlinesTitle: 'Direct Citizen Hotlines',
     sidebarHotlineTollFree: '969 (Toll-free Hotline)',
     sidebarHotlineDirect: '+251 11 442 0123 / 011 442 0456',
-    sidebarLocationText: 'Sub-City HQ, Gotera / Saris Road, Addis Ababa',
+    sidebarLocationText: 'Haile Garment Square, Nifas Silk-Lafto Sub-City Administrative Office, Addis Ababa',
+    viewOnGoogleMaps: 'View on Google Maps',
+    officeLocationTitle: 'Sub-City HQ Office Location',
+    officeLocationAddress: 'Haile Garment Square, Nifas Silk-Lafto, Addis Ababa',
 
     // Errors
     errorRequiredField: 'This field is required',

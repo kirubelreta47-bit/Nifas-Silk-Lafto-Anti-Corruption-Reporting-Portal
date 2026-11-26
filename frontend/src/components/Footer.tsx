@@ -1,11 +1,11 @@
 import React from 'react';
 import { OfficialEmblem } from './OfficialEmblem';
 import { useLanguage } from '../context/LanguageContext';
-import { Shield, PhoneCall, MapPin, Lock, FileText } from 'lucide-react';
+import { Shield, PhoneCall, MapPin, Lock, FileText, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Footer: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   return (
     <footer className="no-print bg-[#0B1F3A] text-white border-t border-slate-800 mt-auto">
@@ -45,9 +45,25 @@ export const Footer: React.FC = () => {
                 <span className="w-2 h-2 rounded-full bg-[#F5B700]" />
                 <span>+251 11 442 0123 / 011 442 0456</span>
               </li>
-              <li className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#F5B700] shrink-0" />
-                <span className="text-xs">ክፍለ ከተማው ዋና አስተዳደር ጽ/ቤት፣ ጎተራ / ሳሪስ መንገድ፣ አዲስ አበባ</span>
+              <li className="flex items-start gap-2.5 pt-1.5 border-t border-slate-700/60">
+                <MapPin className="w-4 h-4 text-[#F5B700] shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="text-xs text-slate-200 leading-relaxed block">
+                    {lang === 'am'
+                      ? 'ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ ዋና አስተዳደር ጽ/ቤት፣ አዲስ አበባ'
+                      : 'Haile Garment Square, Nifas Silk-Lafto Sub-City Administrative Office, Addis Ababa'}
+                  </span>
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=Haile+Garment+Square,+Nifas+Silk-Lafto,+Addis+Ababa"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[#F5B700] hover:underline font-bold text-xs"
+                    title="Google Maps"
+                  >
+                    <span>Google Maps</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
               </li>
             </ul>
           </div>

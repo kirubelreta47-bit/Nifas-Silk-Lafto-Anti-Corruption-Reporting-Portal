@@ -257,11 +257,10 @@ export const ReportsListPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setViewMode('table')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'table'
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'table'
                 ? 'bg-white text-[#0B1F3A] shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
-            }`}
+              }`}
           >
             <TableIcon className="w-3.5 h-3.5" />
             <span>{t('tableView')}</span>
@@ -270,11 +269,10 @@ export const ReportsListPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setViewMode('grouped')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'grouped'
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'grouped'
                 ? 'bg-[#0B1F3A] text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
-            }`}
+              }`}
           >
             <Layers className="w-3.5 h-3.5 text-[#F5B700]" />
             <span>{t('groupByDepartment')}</span>
@@ -300,8 +298,8 @@ export const ReportsListPage: React.FC = () => {
                 {selectedDeptDef
                   ? (lang === 'am' ? selectedDeptDef.am : selectedDeptDef.en)
                   : (officeFilter === 'all'
-                      ? (lang === 'am' ? 'ሁሉም መሥሪያ ቤቶች (አጠቃላይ)' : 'All Departments (General)')
-                      : officeFilter)}
+                    ? (lang === 'am' ? 'ሁሉም መሥሪያ ቤቶች (አጠቃላይ)' : 'All Departments (General)')
+                    : officeFilter)}
               </span>
               <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 text-[#0B1F3A] border border-slate-200">
                 {filteredReports.length} {t('reportsCount')}
@@ -524,109 +522,109 @@ export const ReportsListPage: React.FC = () => {
             </div>
           </div>
         ) : (
-        <div className="space-y-6">
-          {groupedDepartmentReports.map(({ department, reports, total, newCount }) => {
-            return (
-              <div
-                key={department.id}
-                className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-4"
-              >
-                {/* Department Header Banner */}
-                <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-[#0B1F3A] text-[#F5B700] shrink-0">
-                      <Building2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-[#0B1F3A] text-white">
-                          {department.code.toUpperCase()}
-                        </span>
-                        <h3 className="text-base sm:text-lg font-black text-[#0B1F3A]">
-                          {lang === 'am' ? department.am : department.en}
-                        </h3>
+          <div className="space-y-6">
+            {groupedDepartmentReports.map(({ department, reports, total, newCount }) => {
+              return (
+                <div
+                  key={department.id}
+                  className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-4"
+                >
+                  {/* Department Header Banner */}
+                  <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-[#0B1F3A] text-[#F5B700] shrink-0">
+                        <Building2 className="w-5 h-5" />
                       </div>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">
-                        {lang === 'am' ? department.en : department.am}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2.5 self-start sm:self-auto">
-                    {newCount > 0 && (
-                      <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{newCount} New Reports</span>
-                      </span>
-                    )}
-
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-[#0B1F3A] border border-blue-200">
-                      {total} Reports Total
-                    </span>
-
-                    <Link
-                      to={`/admin/qr?dept=${encodeURIComponent(department.id)}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors"
-                      title={t('generateQrForDepartment')}
-                    >
-                      <QrCode className="w-3.5 h-3.5 text-[#0B1F3A]" />
-                      <span className="hidden sm:inline">QR Code</span>
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Reports List for this Department */}
-                {reports.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-slate-400 italic">
-                    {lang === 'am'
-                      ? 'ለዚህ መሥሪያ ቤት እስካሁን የቀረበ የሙስና ጥቆማ የለም።'
-                      : 'No reports recorded yet under this department desk.'}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100 px-4 sm:px-6 pb-4">
-                    {reports.map((report) => (
-                      <div
-                        key={report.id}
-                        className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/60 rounded-xl px-2 transition-colors"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-xs font-extrabold text-[#0B1F3A]">
-                              {report.id}
-                            </span>
-                            <span className="text-xs font-bold text-slate-800">
-                              • {getCorruptionTypeLabel(report.type)}
-                            </span>
-                            <StatusBadge status={report.status} />
-                            {report.urgent && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200">
-                                Urgent
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-600 line-clamp-1">
-                            {report.description}
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            {report.location} • {new Date(report.createdAt).toLocaleDateString()}
-                          </p>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-[#0B1F3A] text-white">
+                            {department.code.toUpperCase()}
+                          </span>
+                          <h3 className="text-base sm:text-lg font-black text-[#0B1F3A]">
+                            {lang === 'am' ? department.am : department.en}
+                          </h3>
                         </div>
-
-                        <Link
-                          to={`/admin/reports/${report.id}`}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0B1F3A] bg-[#E8EEF7] hover:bg-[#F5B700] transition-colors shrink-0 self-end sm:self-auto cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>{t('viewDetail')}</span>
-                        </Link>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">
+                          {lang === 'am' ? department.en : department.am}
+                        </p>
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="flex items-center gap-2.5 self-start sm:self-auto">
+                      {newCount > 0 && (
+                        <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>{newCount} New Reports</span>
+                        </span>
+                      )}
+
+                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-[#0B1F3A] border border-blue-200">
+                        {total} Reports Total
+                      </span>
+
+                      <Link
+                        to={`/admin/qr?dept=${encodeURIComponent(department.id)}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors"
+                        title={t('generateQrForDepartment')}
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-[#0B1F3A]" />
+                        <span className="hidden sm:inline">QR Code</span>
+                      </Link>
+                    </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+
+                  {/* Reports List for this Department */}
+                  {reports.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-slate-400 italic">
+                      {lang === 'am'
+                        ? 'ለዚህ መሥሪያ ቤት እስካሁን የቀረበ የሙስና ጥቆማ የለም።'
+                        : 'No reports recorded yet under this department desk.'}
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100 px-4 sm:px-6 pb-4">
+                      {reports.map((report) => (
+                        <div
+                          key={report.id}
+                          className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/60 rounded-xl px-2 transition-colors"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono text-xs font-extrabold text-[#0B1F3A]">
+                                {report.id}
+                              </span>
+                              <span className="text-xs font-bold text-slate-800">
+                                • {getCorruptionTypeLabel(report.type)}
+                              </span>
+                              <StatusBadge status={report.status} />
+                              {report.urgent && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200">
+                                  Urgent
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-600 line-clamp-1">
+                              {report.description}
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                              {report.location} • {new Date(report.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+
+                          <Link
+                            to={`/admin/reports/${report.id}`}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0B1F3A] bg-[#E8EEF7] hover:bg-[#F5B700] transition-colors shrink-0 self-end sm:self-auto cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{t('viewDetail')}</span>
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )
       ) : (
         /* 4. CLASSIC TABLE VIEW */

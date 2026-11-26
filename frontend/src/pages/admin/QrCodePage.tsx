@@ -18,6 +18,8 @@ import {
   Check,
   Copy,
   ChevronDown,
+  MapPin,
+  ExternalLink,
 } from 'lucide-react';
 
 export const QrCodePage: React.FC = () => {
@@ -60,7 +62,7 @@ export const QrCodePage: React.FC = () => {
           setDepartments(getAllDepartmentsWithPresets());
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     // 2. Listen to local department changes
     const handleUpdate = () => {
@@ -169,7 +171,7 @@ export const QrCodePage: React.FC = () => {
   const handleDownloadPosterPng = () => {
     const canvas = document.createElement('canvas');
     const width = 1200;
-    const height = 1260;
+    const height = 1320;
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
@@ -246,8 +248,21 @@ export const QrCodePage: React.FC = () => {
 
     // Portal Destination URL
     ctx.fillStyle = '#0B1F3A';
-    ctx.font = 'bold 24px monospace';
-    ctx.fillText(computedQrUrl, width / 2, 1175);
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText(computedQrUrl, width / 2, 1165);
+
+    // Official Address at bottom of poster in very small font size
+    ctx.fillStyle = '#1E293B';
+    ctx.font = '600 20px "Noto Sans Ethiopic", "Inter", sans-serif';
+    ctx.fillText('አድራሻ፡ ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ፣ አዲስ አበባ', width / 2, 1215);
+
+    ctx.fillStyle = '#64748B';
+    ctx.font = '500 16px "Inter", sans-serif';
+    ctx.fillText('Location: Haile Garment Square, Nifas Silk-Lafto Sub-City, Addis Ababa, Ethiopia', width / 2, 1248);
+
+    ctx.fillStyle = '#0B1F3A';
+    ctx.font = 'bold 14px "Inter", sans-serif';
+    ctx.fillText('Google Maps: Haile Garment Square, Addis Ababa', width / 2, 1275);
 
     // Bottom Decorative Gold Bar
     ctx.fillStyle = '#F5B700';
@@ -388,6 +403,28 @@ export const QrCodePage: React.FC = () => {
               </>
             )}
           </button>
+
+          {/* Official Location / Address at the bottom of the QR code (small font size) */}
+          <div className="pt-2 border-t border-slate-100 flex flex-col items-center justify-center gap-1 text-center w-full">
+            <div className="flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold text-slate-700">
+              <MapPin className="w-3.5 h-3.5 text-[#F5B700] shrink-0" />
+              <span>
+                {lang === 'am'
+                  ? 'አድራሻ፡ ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ፣ አዲስ አበባ'
+                  : 'Location: Haile Garment Square, Nifas Silk-Lafto Sub-City, Addis Ababa'}
+              </span>
+            </div>
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Haile+Garment+Square,+Nifas+Silk-Lafto,+Addis+Ababa"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-print inline-flex items-center gap-1 text-[11px] font-bold text-[#0B1F3A] hover:text-[#F5B700] transition-colors"
+              title="View on Google Maps"
+            >
+              <span>Google Maps</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
         </div>
 
         {/* 4. Download File Buttons */}

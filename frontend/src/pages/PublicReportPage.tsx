@@ -43,6 +43,7 @@ import {
   Building2,
   ChevronDown,
   QrCode,
+  ExternalLink,
 } from 'lucide-react';
 
 interface EvidenceAttachment extends EvidenceItem {
@@ -433,6 +434,29 @@ export const PublicReportPage: React.FC = () => {
           <p className="text-sm sm:text-base text-slate-600 font-normal leading-relaxed max-w-2xl">
             {t('heroSubtitle')}
           </p>
+
+          {/* Office Location Badge with Map Link */}
+          <div className="pt-1 flex flex-wrap items-center gap-2 text-xs">
+            <div className="inline-flex items-center gap-2 bg-slate-100/90 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200">
+              <MapPin className="w-3.5 h-3.5 text-[#F5B700] shrink-0" />
+              <span className="font-medium">
+                {lang === 'am'
+                  ? 'ዋና ጽ/ቤት፡ ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ፣ አዲስ አበባ'
+                  : 'Main Office: Haile Garment Square, Nifas Silk-Lafto, Addis Ababa'}
+              </span>
+            </div>
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Haile+Garment+Square,+Nifas+Silk-Lafto,+Addis+Ababa"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold bg-[#0B1F3A] hover:bg-[#122b4d] text-[#F5B700] transition-colors cursor-pointer shadow-xs"
+              title="Open Google Maps"
+            >
+              <MapPin className="w-3 h-3 text-[#F5B700]" />
+              <span>{lang === 'am' ? 'በGoogle ካርታ ይመልከቱ' : 'View on Google Maps'}</span>
+              <ExternalLink className="w-3 h-3 ml-0.5 opacity-80" />
+            </a>
+          </div>
         </div>
 
         {/* 2-COLUMN RESPONSIVE LAYOUT (FITS SCREEN NATURALLY, NOT A CONSTRAINED CARD) */}
@@ -988,9 +1012,25 @@ export const PublicReportPage: React.FC = () => {
                   <span className="w-2 h-2 rounded-full bg-[#F5B700]" />
                   <span className="font-medium">+251 11 442 0123 / 011 442 0456</span>
                 </li>
-                <li className="flex items-start gap-2.5 text-slate-300 text-xs pt-1 border-t border-slate-700/80">
-                  <MapPin className="w-3.5 h-3.5 text-[#F5B700] shrink-0 mt-0.5" />
-                  <span>{t('sidebarLocationText')}</span>
+                <li className="flex items-start gap-2.5 text-slate-300 text-xs pt-2 border-t border-slate-700/80">
+                  <MapPin className="w-4 h-4 text-[#F5B700] shrink-0 mt-0.5" />
+                  <div className="space-y-1.5">
+                    <div className="text-white font-medium leading-relaxed">
+                      {t('sidebarLocationText')}
+                    </div>
+                    <div>
+                      <a
+                        href="https://www.google.com/maps/search/?api=1&query=Haile+Garment+Square,+Nifas+Silk-Lafto,+Addis+Ababa"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#F5B700] hover:bg-[#e0a700] text-[#0B1F3A] transition-all shadow-xs"
+                      >
+                        <MapPin className="w-3 h-3" />
+                        <span>{lang === 'am' ? 'በGoogle ካርታ ይመልከቱ' : 'View on Google Maps'}</span>
+                        <ExternalLink className="w-2.5 h-2.5 opacity-80" />
+                      </a>
+                    </div>
+                  </div>
                 </li>
               </ul>
             </div>
