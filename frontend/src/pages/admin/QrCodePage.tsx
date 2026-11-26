@@ -19,7 +19,6 @@ import {
   Copy,
   ChevronDown,
   MapPin,
-  ExternalLink,
 } from 'lucide-react';
 
 export const QrCodePage: React.FC = () => {
@@ -401,26 +400,22 @@ export const QrCodePage: React.FC = () => {
           </button>
 
           {/* Official Location / Address at the bottom of the QR code (small font size) */}
-          <div className="pt-2 border-t border-slate-100 flex flex-col items-center justify-center gap-1 text-center w-full">
-            <div className="flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold text-slate-700">
-              <MapPin className="w-3.5 h-3.5 text-[#F5B700] shrink-0" />
-              <span>
-                {lang === 'am'
-                  ? 'አድራሻ፡ ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ፣ አዲስ አበባ'
-                  : 'Location: Haile Garment Square, Nifas Silk-Lafto Sub-City, Addis Ababa'}
-              </span>
-            </div>
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-center w-full">
             <a
               href="https://www.google.com/maps/search/?api=1&query=Haile+Garment+Square,+Nifas+Silk-Lafto,+Addis+Ababa"
               target="_blank"
               rel="noopener noreferrer"
-              className="no-print inline-flex items-center gap-1 text-[11px] font-bold text-[#0B1F3A] hover:text-[#F5B700] transition-colors"
+              className="p-1 rounded-md text-[#F5B700] hover:text-[#0B1F3A] hover:bg-slate-100 transition-colors shrink-0"
               title={lang === 'am' ? 'አድራሻ' : 'Location'}
+              aria-label={lang === 'am' ? 'አድራሻ' : 'Location'}
             >
-              <MapPin className="w-3 h-3 text-[#F5B700]" />
-              <span>{lang === 'am' ? 'አድራሻ' : 'Location'}</span>
-              <ExternalLink className="w-2.5 h-2.5" />
+              <MapPin className="w-3.5 h-3.5" />
             </a>
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-700">
+              {lang === 'am'
+                ? 'አድራሻ፡ ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ፣ አዲስ አበባ'
+                : 'Location: Haile Garment Square, Nifas Silk-Lafto Sub-City, Addis Ababa'}
+            </span>
           </div>
         </div>
 

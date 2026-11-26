@@ -1,7 +1,7 @@
 import React from 'react';
 import { OfficialEmblem } from './OfficialEmblem';
 import { useLanguage } from '../context/LanguageContext';
-import { Shield, PhoneCall, MapPin, Lock, FileText, ExternalLink } from 'lucide-react';
+import { Shield, PhoneCall, MapPin, Lock, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Footer: React.FC = () => {
@@ -46,27 +46,25 @@ export const Footer: React.FC = () => {
                 <span>+251 11 442 0123 / 011 442 0456</span>
               </li>
               <li className="flex items-start gap-2.5 pt-2 border-t border-slate-700/60">
-                <MapPin className="w-4 h-4 text-[#F5B700] shrink-0 mt-0.5" />
-                <div className="space-y-1">
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=Haile+Garment+Square,+Nifas+Silk-Lafto,+Addis+Ababa"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 rounded-lg bg-[#E8EEF7]/10 hover:bg-[#F5B700] text-[#F5B700] hover:text-[#0B1F3A] transition-colors shrink-0 mt-0.5 cursor-pointer"
+                  title={lang === 'am' ? 'አድራሻ' : 'Location'}
+                  aria-label={lang === 'am' ? 'አድራሻ' : 'Location'}
+                >
+                  <MapPin className="w-4 h-4" />
+                </a>
+                <div className="space-y-0.5">
                   <span className="font-semibold text-white text-xs block">
                     {lang === 'am' ? 'አድራሻ' : 'Location'}
                   </span>
-                  <span className="text-xs text-slate-200 leading-relaxed block">
+                  <span className="text-xs text-slate-300 leading-relaxed block">
                     {lang === 'am'
                       ? 'ኃይሌ ጋርመንት አደባባይ፣ ንፋስ ስልክ ላፍቶ ክፍለ ከተማ ዋና አስተዳደር ጽ/ቤት፣ አዲስ አበባ'
                       : 'Haile Garment Square, Nifas Silk-Lafto Sub-City Administrative Office, Addis Ababa'}
                   </span>
-                  <a
-                    href="https://www.google.com/maps/search/?api=1&query=Haile+Garment+Square,+Nifas+Silk-Lafto,+Addis+Ababa"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[#F5B700] hover:text-amber-300 font-bold text-xs pt-0.5 transition-colors"
-                    title={lang === 'am' ? 'አድራሻ' : 'Location'}
-                  >
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{lang === 'am' ? 'አድራሻ' : 'Location'}</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
                 </div>
               </li>
             </ul>
